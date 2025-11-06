@@ -1,0 +1,330 @@
+/* Quark's Bar Invoice System - DS9 LCARS-inspired Styles */
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: "Courier New", Courier, monospace;
+  background: #000000;
+  color: #ffcc00;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(138, 43, 226, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(255, 140, 0, 0.1) 0%, transparent 50%);
+}
+
+h1, h2, h3 {
+  color: #ff9966;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  border-left: 5px solid #cc99ff;
+  padding-left: 15px;
+  margin: 20px 0;
+  text-shadow: 0 0 10px rgba(255, 153, 102, 0.5);
+}
+
+/* Tables */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin: 20px 0;
+  background: #1a1a2e;
+  border: 3px solid #cc99ff;
+  box-shadow: 
+    0 0 20px rgba(204, 153, 255, 0.3),
+    inset 0 0 30px rgba(0, 0, 0, 0.5);
+}
+
+thead {
+  background: linear-gradient(180deg, #663399 0%, #4d2673 100%);
+}
+
+th {
+  padding: 15px;
+  text-align: left;
+  color: #ffcc00;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  letter-spacing: 2px;
+  border-right: 2px solid #000000;
+  border-bottom: 3px solid #ff9966;
+  font-weight: bold;
+}
+
+th:last-child {
+  border-right: none;
+}
+
+td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #333366;
+  border-right: 1px solid #333366;
+  color: #cccccc;
+}
+
+td:last-child {
+  border-right: none;
+}
+
+tbody tr {
+  background: #0f0f1e;
+  transition: all 0.3s ease;
+}
+
+tbody tr:nth-child(even) {
+  background: #1a1a2e;
+}
+
+tbody tr:hover {
+  background: #2d2d4d;
+  box-shadow: inset 0 0 10px rgba(255, 153, 102, 0.2);
+  transform: translateX(3px);
+}
+
+/* Buttons */
+button,
+input[type="submit"],
+.btn {
+  padding: 10px 20px;
+  margin: 5px;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1em;
+  font-weight: bold;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.5);
+  position: relative;
+  overflow: hidden;
+}
+
+button::before,
+input[type="submit"]::before,
+.btn::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.2);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+button:hover::before,
+input[type="submit"]:hover::before,
+.btn:hover::before {
+  width: 300px;
+  height: 300px;
+}
+
+/* Primary button - Ferengi Gold */
+button,
+input[type="submit"],
+.btn-primary {
+  background: linear-gradient(135deg, #ff9933 0%, #cc6600 100%);
+  color: #000000;
+  border-bottom: 3px solid #994d00;
+}
+
+button:hover,
+input[type="submit"]:hover,
+.btn-primary:hover {
+  background: linear-gradient(135deg, #ffaa44 0%, #dd7711 100%);
+  box-shadow: 0 0 15px rgba(255, 153, 51, 0.6);
+  transform: translateY(-2px);
+}
+
+button:active,
+input[type="submit"]:active,
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* Delete button */
+.btn-delete,
+button[name*="delete"],
+button[value*="delete"] {
+  background: linear-gradient(135deg, #cc0000 0%, #990000 100%);
+  color: #ffffff;
+  border-bottom: 3px solid #660000;
+}
+
+.btn-delete:hover,
+button[name*="delete"]:hover,
+button[value*="delete"]:hover {
+  background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+  box-shadow: 0 0 15px rgba(255, 0, 0, 0.6);
+}
+
+/* Secondary button */
+.btn-secondary {
+  background: linear-gradient(135deg, #6666cc 0%, #4d4d99 100%);
+  color: #ffffff;
+  border-bottom: 3px solid #333366;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #7777dd 0%, #5e5eaa 100%);
+  box-shadow: 0 0 15px rgba(102, 102, 204, 0.6);
+}
+
+/* Form inputs */
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="date"],
+input[type="datetime-local"],
+textarea,
+select {
+  width: 100%;
+  padding: 12px;
+  margin: 8px 0;
+  font-family: "Courier New", Courier, monospace;
+  font-size: 1em;
+  background: #0f0f1e;
+  border: 2px solid #663399;
+  border-radius: 5px;
+  color: #ffcc00;
+  box-shadow: 
+    inset 0 2px 5px rgba(0, 0, 0, 0.5),
+    0 0 10px rgba(102, 51, 153, 0.3);
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+input[type="email"]:focus,
+input[type="date"]:focus,
+input[type="datetime-local"]:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: #cc99ff;
+  box-shadow: 
+    inset 0 2px 5px rgba(0, 0, 0, 0.5),
+    0 0 20px rgba(204, 153, 255, 0.6);
+  background: #1a1a2e;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: #666699;
+  opacity: 1;
+}
+
+/* Labels */
+label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 5px;
+  color: #ff9966;
+  text-transform: uppercase;
+  font-size: 0.9em;
+  letter-spacing: 1px;
+}
+
+/* Form groups */
+.form-group {
+  margin-bottom: 20px;
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.7);
+  border: 2px solid #663399;
+  border-radius: 10px;
+  box-shadow: 0 0 30px rgba(102, 51, 153, 0.4);
+}
+
+/* Links */
+a {
+  color: #cc99ff;
+  text-decoration: none;
+  border-bottom: 1px dotted #cc99ff;
+  transition: all 0.2s ease;
+}
+
+a:hover {
+  color: #ffcc00;
+  border-bottom-color: #ffcc00;
+  text-shadow: 0 0 10px rgba(255, 204, 0, 0.5);
+}
+
+/* Alert/Message boxes */
+.alert {
+  padding: 15px;
+  margin: 20px 0;
+  border-radius: 5px;
+  border-left: 5px solid;
+}
+
+.alert-success {
+  background: rgba(0, 150, 0, 0.2);
+  border-left-color: #00cc00;
+  color: #00ff00;
+}
+
+.alert-error {
+  background: rgba(150, 0, 0, 0.2);
+  border-left-color: #cc0000;
+  color: #ff6666;
+}
+
+.alert-info {
+  background: rgba(0, 0, 150, 0.2);
+  border-left-color: #6666cc;
+  color: #9999ff;
+}
+
+/* Loading spinner */
+.loading {
+  border: 4px solid #663399;
+  border-top: 4px solid #ffcc00;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  table {
+    font-size: 0.9em;
+  }
+  
+  th, td {
+    padding: 8px;
+  }
+  
+  button,
+  input[type="submit"] {
+    width: 100%;
+    margin: 5px 0;
+  }
+}
+
+/* Citation:
+Generated by Claude AI on 2025/11/05 using this prompt:
+I'm using Handlebars and Node to create a simple CRUD interface for a database. 
+Can you please write me a global CSS file that styles tables, buttons, and any 
+inputs to look like a mid-90s space-themed site? Our project is based on 
+Star Trek Deep Space 9, and we are making an invoicing system for Quark's bar.
+*/

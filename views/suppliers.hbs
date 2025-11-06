@@ -1,0 +1,55 @@
+<h1>Current Suppliers</h1>
+
+<div>There are this many suppliers: {{suppliers.length}}</div>
+
+{{! READ table }}
+<table>
+    <thead>
+        {{! For the table header row, we print the DB attribute names }}
+        <tr>
+            {{#each suppliers.[0]}}
+            <th>
+                {{@key}}
+            </th>
+            {{/each}}
+            <th></th>
+        </tr>
+    </thead>
+
+    <tbody>
+        {{! For each row, print the supplierID, supplierName, gullibilityRating, blackmailable, cultureID, favoriteFood }}
+        {{#each suppliers}}
+        <tr>
+            <td>{{this.supplierID}}</td>
+            <td>{{this.supplierName}}</td>
+            <td>{{this.gullibilityRating}}</td>
+            <td>{{this.blackmailable}}</td>
+            <td>{{this.cultureID}}</td>
+            <td>{{this.favoriteFood}}</td>
+
+            {{! DELETE form }}
+            <form id='delete_supplier_form'>
+                <input type='hidden' name='delete_supplier_id' value='{{this.supplierID}}' />
+                <input type='hidden' name='delete_supplier_name' value='{{this.supplierName}}' />
+                <td>
+                    <button type='submit'>
+                        Delete
+                    </button>
+                </td>
+            </form>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
+
+<a href='/add-supplier'>
+    <button type='button'>
+        Add New Supplier
+    </button>
+</a>
+
+<a href='/update-supplier'>
+    <button type='button'>
+        Update Existing Supplier
+    </button>
+</a>

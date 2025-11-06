@@ -1,0 +1,35 @@
+{{! CREATE form }}
+<h1>Add New Customer</h1>
+<form class='cuForm' id='create_customer_form'>
+    <label for='create_customer_name'>Name: </label>
+    <input type='text' name='create_customer_name' id='create_customer_name' required />
+
+    <label for='create_customer_gullibility'>Gullibility Rating: </label>
+    <input type='number' name='create_customer_gullibility' id='create_customer_gullibility' min='0' />
+
+    <label for='create_customer_blackmailable'>Blackmailable: </label>
+    <select name='create_customer_blackmailable' id='create_customer_blackmailable'>
+        <option value='0'>No</option>
+        <option value='1'>Yes</option>
+    </select>
+
+    <label for='create_customer_culture'>Culture: </label>
+    <select name='create_customer_culture' id='create_customer_culture'>
+        <option value='NULL' selected>Select a Culture</option>
+        <option value='NULL'>&lt; None &gt;</option>
+        {{#each cultures}}
+        <option value='{{this.cultureID}}'>{{this.cultureName}}</option>
+        {{/each}}
+    </select>
+
+    <label for='create_customer_favorite_food'>Favorite Food: </label>
+    <select name='create_customer_favorite_food' id='create_customer_favorite_food'>
+        <option value='NULL' selected>Select a Food Item</option>
+        <option value='NULL'>&lt; None &gt;</option>
+        {{#each foodItems}}
+        <option value='{{this.foodItemID}}'>{{this.foodName}}</option>
+        {{/each}}
+    </select>
+
+    <input type='submit' />
+</form>
