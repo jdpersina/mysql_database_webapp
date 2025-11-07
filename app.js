@@ -56,19 +56,24 @@ app.get('/', async function (req, res) {
 /* CUSTOMER ROUTES */ 
 app.get('/customers', async function (req, res) {
     try {
-        const customerQuery = `SELECT * from Customers;`;
+        const customerQuery = `SELECT customerName, gullibilityRating AS gullibility, blackmailable, cultureName,
+                                    favoriteFood
+                                    FROM Customers
+                                    LEFT JOIN Cultures ON Customers.cultureID = Cultures.cultureID
+                                    LEFT JOIN FoodItems ON Customers.favoriteFood = FoodItems.foodItemID
+                                    ;`;
         const [customers] = await db.query(customerQuery);
 
-        const foodItemsQuery = `SELECT * from FoodItems;`;
-        const [foodItems] = await db.query(foodItemsQuery);
+        // const foodItemsQuery = `SELECT * from FoodItems;`;
+        // const [foodItems] = await db.query(foodItemsQuery);
 
-        const culturesQuery = `SELECT * from Cultures;`;
-        const [cultures] = await db.query(culturesQuery);
+        // const culturesQuery = `SELECT * from Cultures;`;
+        // const [cultures] = await db.query(culturesQuery);
 
 
         // Render the bsg-people.hbs file, and also send the renderer
         //  an object that contains our bsg_people and bsg_homeworld information
-        res.render('customers', { customers: customers, foodItems: foodItems, cultures: cultures});
+        res.render('customers', { customers: customers });
     } catch (error) {
         console.error('Error executing queries:', error);
         // Send a generic error message to the browser
