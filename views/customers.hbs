@@ -20,11 +20,11 @@
         {{! For each row, print the customerID, customerName, gullibilityRating, blackmailable, cultureID, favoriteFood }}
         {{#each customers}}
         <tr>
-            <td>{{this.customerID}}</td>
+            {{!-- <td>{{this.customerID}}</td> --}}
             <td>{{this.customerName}}</td>
-            <td>{{this.gullibilityRating}}</td>
+            <td>{{this.gullibility}}</td>
             <td>{{this.blackmailable}}</td>
-            <td>{{this.cultureID}}</td>
+            <td>{{this.cultureName}}</td>
             <td>{{this.favoriteFood}}</td>
 
             {{! DELETE form }}

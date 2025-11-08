@@ -3,13 +3,11 @@
 {{! READ table }}
 <table>
     <thead>
-        {{! For the table header row, we print the DB attribute names }}
         <tr>
-            {{#each invoices.[0]}}
-            <th>
-                {{@key}}
-            </th>
-            {{/each}}
+            <th>Invoice ID</th>
+            <th>Customer Name</th>
+            <th>Item Count</th>
+            <th>Items Provided</th>
             <th></th>
         </tr>
     </thead>
@@ -18,16 +16,14 @@
         {{! For each row, print the invoice details }}
         {{#each invoices}}
         <tr>
-            <td>{{this.invoiceID}}</td>
+            <td>{{this.customerInvoiceID}}</td>
             <td>{{this.customerName}}</td>
-            <td>{{this.foodItemName}}</td>
-            <td>{{this.quantity}}</td>
-            <td>{{this.totalPrice}}</td>
-            <td>{{this.invoiceDate}}</td>
+            <td>{{this.itemCount}}</td>
+            <td>{{this.items}}</td>
 
             {{! DELETE form }}
             <form id='delete_invoice_form'>
-                <input type='hidden' name='delete_invoice_id' value='{{this.invoiceID}}' />
+                <input type='hidden' name='delete_invoice_id' value='{{this.customerInvoiceID}}' />
                 <td>
                     <button type='submit' class='btn-delete'>
                         Delete
@@ -54,15 +50,12 @@
     <select name='create_invoice_fooditem' id='create_invoice_fooditem' required>
         <option value='' disabled selected>Select an Item</option>
         {{#each foodItems}}
-        <option value='{{this.foodItemID}}'>{{this.itemName}} - {{this.price}} slips</option>
+        <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
         {{/each}}
     </select>
 
     <label for='create_invoice_quantity'>Quantity:</label>
     <input type='number' name='create_invoice_quantity' id='create_invoice_quantity' min='1' value='1' required />
-
-    <label for='create_invoice_date'>Invoice Date:</label>
-    <input type='date' name='create_invoice_date' id='create_invoice_date' required />
 
     <input type='submit' value='Create Invoice' />
 </form>
@@ -74,8 +67,8 @@
     <select name='update_invoice_id' id='update_invoice_id' required>
         <option value='' disabled selected>Select an Invoice</option>
         {{#each invoices}}
-        <option value='{{this.invoiceID}}'>
-            Invoice #{{this.invoiceID}} - {{this.customerName}} - {{this.foodItemName}}
+        <option value='{{this.customerInvoiceID}}'>
+            Invoice #{{this.customerInvoiceID}} - {{this.customerName}}
         </option>
         {{/each}}
     </select>
@@ -92,15 +85,12 @@
     <select name='update_invoice_fooditem' id='update_invoice_fooditem'>
         <option value='' disabled selected>Select an Item</option>
         {{#each foodItems}}
-        <option value='{{this.foodItemID}}'>{{this.itemName}} - {{this.price}} slips</option>
+        <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
         {{/each}}
     </select>
 
     <label for='update_invoice_quantity'>Quantity: </label>
     <input type='number' name='update_invoice_quantity' id='update_invoice_quantity' min='1' />
-
-    <label for='update_invoice_date'>Invoice Date: </label>
-    <input type='date' name='update_invoice_date' id='update_invoice_date' />
 
     <input type='submit' value='Update Invoice' />
 </form>

@@ -29,24 +29,7 @@ app.use(express.static('public'));
 
 app.get('/', async function (req, res) {
     try {        
-        // Define our queries
-        const query1 = 'DROP TABLE IF EXISTS diagnostic;';
-        const query2 = 'CREATE TABLE diagnostic(id INT PRIMARY KEY AUTO_INCREMENT, text VARCHAR(255) NOT NULL);';
-        const query3 = 'INSERT INTO diagnostic (text) VALUES ("New test query");';
-        const query4 = 'SELECT * FROM diagnostic;';
-        
-        // Execute each query synchronously (await).
-        await db.query(query1);
-        await db.query(query2);
-        await db.query(query3);
-        const [rows] = await db.query(query4);
-        
-        // Render the index template with the data
-        res.render('index', { 
-            data: rows,
-            dataJson: JSON.stringify(rows, null, 2)
-        });
-
+        res.render('index');
     } catch (error) {
         console.error("Error executing queries:", error);
         res.status(500).send("An error occurred while executing the database queries.");
@@ -56,19 +39,15 @@ app.get('/', async function (req, res) {
 /* CUSTOMER ROUTES */ 
 app.get('/customers', async function (req, res) {
     try {
-        const customerQuery = `SELECT * from Customers;`;
+        const customerQuery = `SELECT customerName, gullibilityRating AS gullibility, blackmailable, cultureName,
+                                    favoriteFood
+                                    FROM Customers
+                                    LEFT JOIN Cultures ON Customers.cultureID = Cultures.cultureID
+                                    LEFT JOIN FoodItems ON Customers.favoriteFood = FoodItems.foodItemID
+                                    ;`;
         const [customers] = await db.query(customerQuery);
 
-        const foodItemsQuery = `SELECT * from FoodItems;`;
-        const [foodItems] = await db.query(foodItemsQuery);
-
-        const culturesQuery = `SELECT * from Cultures;`;
-        const [cultures] = await db.query(culturesQuery);
-
-
-        // Render the bsg-people.hbs file, and also send the renderer
-        //  an object that contains our bsg_people and bsg_homeworld information
-        res.render('customers', { customers: customers, foodItems: foodItems, cultures: cultures});
+        res.render('customers', { customers: customers });
     } catch (error) {
         console.error('Error executing queries:', error);
         // Send a generic error message to the browser
@@ -88,16 +67,26 @@ app.get('/update-customer', (req, res) => {
 
 app.get('/invoices/customers', async function (req, res) {
     try {
-        const customerQuery = `SELECT * from Customers;`;
-        const [customers] = await db.query(customerQuery);
+        const cInvoiceQuery = `SELECT 
+                                    ci.customerInvoiceID,
+                                    c.customerName,
+                                    COUNT(cihf.foodItemID) AS itemCount,
+                                    GROUP_CONCAT(fi.itemName SEPARATOR ', ') AS items
+                                FROM CustomerInvoices ci
+                                INNER JOIN Customers c ON ci.customerID = c.customerID
+                                LEFT JOIN CustomerInvoice_Has_FoodItems cihf ON ci.customerInvoiceID = cihf.customerInvoiceID
+                                LEFT JOIN FoodItems fi ON cihf.foodItemID = fi.foodItemID
+                                GROUP BY ci.customerInvoiceID, c.customerName
+                                ORDER BY ci.customerInvoiceID DESC;`
+        const [cInvoices] = await db.query(cInvoiceQuery);
 
-        const foodItemsQuery = `SELECT * from FoodItems;`;
-        const [foodItems] = await db.query(foodItemsQuery);
+        const foodItemQuery = `SELECT * from FoodItems;`
+        const [foodItems] = await db.query(foodItemQuery)
 
-        const invoicesQuery = `SELECT * from CustomerInvoices`;
-        const [invoices] = await db.query(invoicesQuery);
+        const customerQuery = `SELECT customerID, customerName from Customers;`
+        const [customers] = await db.query(customerQuery)
 
-        res.render('customer-invoices', { customers: customers, foodItems: foodItems, invoices: invoices});
+        res.render('customer-invoices', { invoices: cInvoices, foodItems: foodItems, customers: customers });
     } catch (error) {
         console.error('Error executing queries:', error);
         // Send a generic error message to the browser
@@ -135,16 +124,26 @@ app.get('/suppliers', async function (req, res) {
 
 app.get('/invoices/suppliers', async function (req, res) {
     try {
-        const supplierQuery = `SELECT * from Suppliers;`;
-        const [suppliers] = await db.query(supplierQuery);
+        const sInvoiceQuery = `SELECT 
+                                    si.supplierInvoiceID,
+                                    s.supplierName,
+                                    COUNT(sihf.foodItemID) AS itemCount,
+                                    GROUP_CONCAT(fi.itemName SEPARATOR ', ') AS items
+                                FROM SupplierInvoices si
+                                INNER JOIN Suppliers s ON si.supplierID = s.supplierID
+                                LEFT JOIN SupplierInvoice_Has_FoodItems sihf ON si.supplierInvoiceID = sihf.supplierInvoiceID
+                                LEFT JOIN FoodItems fi ON sihf.foodItemID = fi.foodItemID
+                                GROUP BY si.supplierInvoiceID, s.supplierName
+                                ORDER BY si.supplierInvoiceID DESC;`
+        const [sInvoices] = await db.query(sInvoiceQuery);
 
-        const foodItemsQuery = `SELECT * from FoodItems;`;
-        const [foodItems] = await db.query(foodItemsQuery);
+        const foodItemQuery = `SELECT * from FoodItems;`
+        const [foodItems] = await db.query(foodItemQuery)
 
-        const invoicesQuery = `SELECT * from SupplierInvoices`;
-        const [invoices] = await db.query(invoicesQuery);
+        const supplierQuery = `SELECT supplierID, supplierName from Suppliers;`
+        const [suppliers] = await db.query(supplierQuery)
 
-        res.render('supplier-invoices', { suppliers: suppliers, foodItems: foodItems, invoices: invoices});
+        res.render('supplier-invoices', { invoices: sInvoices, foodItems: foodItems, suppliers: suppliers });
     } catch (error) {
         console.error('Error executing queries:', error);
         // Send a generic error message to the browser
