@@ -87,10 +87,10 @@ START TRANSACTION;
 		WHERE supplierName = @sNameInput)
 	);
 
--- 2) Insert food item entry using itemName
+	-- 2) Insert food item entry using itemName
 	INSERT INTO SupplierInvoice_Has_FoodItems (supplierInvoiceID, foodItemID, quantity)
 	VALUES (
-		LAST_INSERT_ID(), 
+		LAST_INSERT_ID(),            -- LAST_INSERT_ID function supplied by Chat GPT
 		(SELECT foodItemID 
 		FROM FoodItems 
 		WHERE itemName = @fNameInput),
@@ -110,10 +110,10 @@ START TRANSACTION;
 		WHERE customerName = @cNameInput)
 	);
 
--- 2) Insert food item entry using itemName
+	-- 2) Insert food item entry using itemName
 	INSERT INTO CustomerInvoice_Has_FoodItems (customerInvoiceID, foodItemID, quantity)
 	VALUES (
-		LAST_INSERT_ID(), 
+		LAST_INSERT_ID(),         -- LAST_INSERT_ID function supplied by Chat GPT
 		(SELECT foodItemID 
 		FROM FoodItems 
 		WHERE itemName = @fNameInput),
@@ -122,4 +122,37 @@ START TRANSACTION;
 
 COMMIT;
 
-SELECT * from Customers
+-- This query grabs information on a customer invoice per user input of a customer InvoiceID
+SELECT CustomerInvoices.customerInvoiceID, Customers.customerName,
+	GROUP_CONCAT(CONCAT(FoodItems.itemName,' (',CustomerInvoice_Has_FoodItems.quantity,')') SEPARATOR ', ') AS foodItems
+FROM CustomerInvoices 
+JOIN Customers ON CustomerInvoices.customerID = Customers.customerID
+JOIN CustomerInvoice_Has_FoodItems ON CustomerInvoices.customerInvoiceID = CustomerInvoice_Has_FoodItems.customerInvoiceID
+JOIN FoodItems ON CustomerInvoice_Has_FoodItems.foodItemID = FoodItems.foodItemID
+WHERE CustomerInvoices.customerInvoiceID = @cIDInput
+;
+
+-- This query grabs information on a customer invoice per user input of a customer InvoiceID
+
+SELECT SupplierInvoices.supplierInvoiceID, Suppliers.supplierName,
+    GROUP_CONCAT(CONCAT(FoodItems.itemName, ' (', SupplierInvoice_Has_FoodItems.quantity, ')') SEPARATOR ', ') AS foodItems
+FROM SupplierInvoices
+JOIN Suppliers ON SupplierInvoices.supplierID = Suppliers.supplierID
+JOIN SupplierInvoice_Has_FoodItems ON SupplierInvoices.supplierInvoiceID = SupplierInvoice_Has_FoodItems.supplierInvoiceID
+JOIN FoodItems ON SupplierInvoice_Has_FoodItems.foodItemID = FoodItems.foodItemID
+WHERE SupplierInvoices.supplierInvoiceID = @sIDInput
+;
+
+-- This query will Delete the Supplier Invoice (For tax purposes)
+START TRANSACTION;
+
+-- 1) Delete FoodItems from Invoice
+DELETE FROM SupplierInvoice_Has_FoodItems
+WHERE supplierInvoiceID = @sIDInput;   -- replace with the invoice ID you want to remove
+
+-- 2) Delete the invoice itself
+DELETE FROM SupplierInvoices
+WHERE supplierInvoiceID = @sIDInput;   -- same invoice ID
+
+COMMIT;
+
