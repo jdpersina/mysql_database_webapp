@@ -36,11 +36,30 @@ app.get('/', async function (req, res) {
     }
 });
 
+app.post('/reset', async function (req, res) {
+    try {
+        const query1 = `CALL sp_resetdb;`;
+
+        await db.query(query1);
+
+        console.log("Reset ran!")
+
+        // Redirect the user to the updated webpage
+        res.redirect('/');
+    } catch (error) {
+        console.error('Error executing queries:', error);
+        // Send a generic error message to the browser
+        res.status(500).send(
+            'An error occurred while executing the database queries.'
+        );
+    }
+});
+
 /* CUSTOMER ROUTES */ 
 app.get('/customers', async function (req, res) {
     try {
         const customerQuery = `SELECT customerName, gullibilityRating AS gullibility, blackmailable, cultureName,
-                                    favoriteFood
+                                    favoriteFood, customerID
                                     FROM Customers
                                     LEFT JOIN Cultures ON Customers.cultureID = Cultures.cultureID
                                     LEFT JOIN FoodItems ON Customers.favoriteFood = FoodItems.foodItemID
@@ -63,6 +82,31 @@ app.get('/add-customer', (req, res) => {
 
 app.get('/update-customer', (req, res) => {
     res.render('customer-update');
+});
+
+app.post('/delete-customer', async function (req, res) {
+    try {
+        // Parse frontend form information
+        let data = req.body;
+
+        // Create and execute our query
+        // Using parameterized queries (Prevents SQL injection attacks)
+        const query1 = `CALL sp_DeleteCustomer(?);`;
+        await db.query(query1, [data.delete_customer_id]);
+
+        console.log(`DELETE customer. ID: ${data.delete_customer_id} ` +
+            `Name: ${data.delete_customer_name}`
+        );
+
+        // Redirect the user to the updated webpage data
+        res.redirect('/customers');
+    } catch (error) {
+        console.error('Error executing queries:', error);
+        // Send a generic error message to the browser
+        res.status(500).send(
+            'An error occurred while executing the database queries.'
+        );
+    }
 });
 
 app.get('/invoices/customers', async function (req, res) {
