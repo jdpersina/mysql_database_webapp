@@ -28,7 +28,7 @@
             <td>{{this.favoriteFood}}</td>
 
             {{! DELETE form }}
-            <form id='delete_customer_form'>
+            <form id='delete_customer_form' method='POST' action='/delete-customer'>
                 <input type='hidden' name='delete_customer_id' value='{{this.customerID}}' />
                 <input type='hidden' name='delete_customer_name' value='{{this.customerName}}' />
                 <td>
