@@ -1,35 +1,57 @@
 {{! CREATE form }}
 <h1>Add New Customer</h1>
-<form class='cuForm' id='create_customer_form'>
+<form class='cuForm' id='create_customer_form' method='POST' action='/create-new-customer'>
     <label for='create_customer_name'>Name: </label>
     <input type='text' name='create_customer_name' id='create_customer_name' required />
 
     <label for='create_customer_gullibility'>Gullibility Rating: </label>
-    <input type='number' name='create_customer_gullibility' id='create_customer_gullibility' min='0' />
+    <input type='number' name='create_customer_gullibility' id='create_customer_gullibility' min='0' required />
 
     <label for='create_customer_blackmailable'>Blackmailable: </label>
-    <select name='create_customer_blackmailable' id='create_customer_blackmailable'>
+    <select name='create_customer_blackmailable' id='create_customer_blackmailable' required>
         <option value='0'>No</option>
         <option value='1'>Yes</option>
     </select>
 
     <label for='create_customer_culture'>Culture: </label>
-    <select name='create_customer_culture' id='create_customer_culture'>
-        <option value='NULL' selected>Select a Culture</option>
-        <option value='NULL'>&lt; None &gt;</option>
+    <select name='create_customer_culture' id='create_customer_culture' required>
+        <option value='NULL' disabled selected>Select a Culture</option>
         {{#each cultures}}
         <option value='{{this.cultureID}}'>{{this.cultureName}}</option>
         {{/each}}
     </select>
 
     <label for='create_customer_favorite_food'>Favorite Food: </label>
-    <select name='create_customer_favorite_food' id='create_customer_favorite_food'>
-        <option value='NULL' selected>Select a Food Item</option>
-        <option value='NULL'>&lt; None &gt;</option>
+    <select name='create_customer_favorite_food' id='create_customer_favorite_food' required>
+        <option value='NULL' disabled selected>Select a Food Item</option>
         {{#each foodItems}}
-        <option value='{{this.foodItemID}}'>{{this.foodName}}</option>
+        <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
         {{/each}}
     </select>
 
     <input type='submit' />
 </form>
+
+
+<script>
+document.getElementById("create_customer_form").addEventListener("submit", function (event) {
+    const name = document.getElementById("create_customer_name").value.trim();
+    const gullibility = document.getElementById("create_customer_gullibility").value;
+    const blackmailable = document.getElementById("create_customer_blackmailable").value;
+    const culture = document.getElementById("create_customer_culture").value;
+    const food = document.getElementById("create_customer_favorite_food").value;
+
+    let missing = [];
+
+    if (!name) missing.push("Name");
+    if (!gullibility) missing.push("Gullibility Rating");
+    if (!blackmailable) missing.push("Blackmailable");
+    if (!culture) missing.push("Culture");
+    if (!food) missing.push("Favorite Food");
+
+    if (missing.length > 0) {
+        event.preventDefault(); // stop the form from submitting
+        alert("Please fill in the following fields:\n\n" + missing.join("\n"));
+    }
+});
+</script>

@@ -1,1 +1,20 @@
-<h1>Cultures</h1>
+<h1>All Cultures</h1>
+
+<div>There are {{cultures.length}} cultures.</div>
+
+<table border="1" cellspacing="0" cellpadding="5">
+    <thead>
+        <tr>
+            <th>Culture ID</th>
+            <th>Culture Name</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each cultures}}
+        <tr>
+            <td>{{this.cultureID}}</td>
+            <td>{{this.cultureName}}</td>
+        </tr>
+        {{/each}}
+    </tbody>
+</table>
