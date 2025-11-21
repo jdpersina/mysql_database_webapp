@@ -1,49 +1,71 @@
 {{! UPDATE form }}
-<h1>Update a Customer</h2>
-<form class='cuForm' id='update_customer_form'>
+<h2>Update a Customer</h2>
+
+<form class='cuForm' id='update_customer_form' method='POST' action='/update-existing-customer'>
+    <!-- Select the customer to update -->
     <label for='update_customer_id'>Customer to Update: </label>
-    <select name='update_customer_id' id='update_customer_id' required>
+    <select name='customerID' id='update_customer_id' required>
         <option value='' disabled selected>Select a Customer</option>
         {{#each customers}}
-        <option value='{{this.customerID}}' required>
-            {{this.customerID}}
-            -
-            {{this.customerName}}
+        <option value='{{this.customerID}}'>
+            {{this.customerID}} - {{this.customerName}}
         </option>
         {{/each}}
     </select>
 
-    <label for='update_customer_gullibility'>Gullibility Rating: </label>
-    <input type='number' name='update_customer_gullibility' id='update_customer_gullibility' min='0' />
+    <!-- Customer Name -->
+    <label for='update_customer_name'>Name: </label>
+    <input type='text' name='customerName' id='update_customer_name' required />
 
+    <!-- Gullibility Rating -->
+    <label for='update_customer_gullibility'>Gullibility Rating: </label>
+    <input type='number' name='gullibilityRating' id='update_customer_gullibility' min='0' />
+
+    <!-- Blackmailable -->
     <label for='update_customer_blackmailable'>Blackmailable: </label>
-    <select name='update_customer_blackmailable' id='update_customer_blackmailable'>
-        <option value='' disabled selected>Select Option</option>
+    <select name='blackmailable' id='update_customer_blackmailable'>
+        <option value='' disabled selected>Select Updated Rating</option>
         <option value='0'>No</option>
         <option value='1'>Yes</option>
     </select>
 
+    <!-- Culture -->
     <label for='update_customer_culture'>Culture: </label>
-    <select name='update_customer_culture' id='update_customer_culture'>
-        <option value='NULL' disabled selected>Select a Culture</option>
-        <option value='NULL'>&lt; None &gt;</option>
+    <select name='cultureID' id='update_customer_culture'>
+        <option value='' disabled selected>Select Updated Culture</option>
         {{#each cultures}}
-        <option value='{{this.cultureID}}'>
-            {{this.cultureName}}
-        </option>
+        <option value='{{this.cultureID}}'>{{this.cultureName}}</option>
         {{/each}}
     </select>
 
+    <!-- Favorite Food -->
     <label for='update_customer_favorite_food'>Favorite Food: </label>
-    <select name='update_customer_favorite_food' id='update_customer_favorite_food'>
-        <option value='NULL' disabled selected>Select a Food Item</option>
-        <option value='NULL'>&lt; None &gt;</option>
+    <select name='favoriteFoodID' id='update_customer_favorite_food'>
+        <option value='' disabled selected>Select Updated Food Item</option>
         {{#each foodItems}}
-        <option value='{{this.foodItemID}}'>
-            {{this.foodName}}
-        </option>
+        <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
         {{/each}}
     </select>
 
-    <input type='submit' />
+    <input type='submit' value='Save Changes' />
 </form>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    const customers = {{customersJSON}}; // pass JSON-encoded customers from server
+    const selectCustomer = document.getElementById("update_customer_id");
+
+    selectCustomer.addEventListener("change", function() {
+        const id = selectCustomer.value;
+        const customer = customers.find(c => c.customerID == id);
+
+        if (!customer) return;
+
+        document.getElementById("update_customer_name").value = customer.customerName || "";
+        document.getElementById("update_customer_gullibility").value = customer.gullibility || "";
+        document.getElementById("update_customer_blackmailable").value = customer.blackmailable || 0;
+        document.getElementById("update_customer_culture").value = customer.cultureID || "";
+        document.getElementById("update_customer_favorite_food").value = customer.favoriteFood || "";
+    });
+});
+</script>

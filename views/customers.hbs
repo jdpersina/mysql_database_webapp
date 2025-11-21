@@ -5,14 +5,13 @@
 {{! READ table }}
 <table>
     <thead>
-        {{! For the table header row, we print the DB attribute names }}
         <tr>
-            {{#each customers.[0]}}
-            <th>
-                {{@key}}
-            </th>
-            {{/each}}
-            <th></th>
+            <th>Customer Name</th>
+            <th>Gullibility</th>
+            <th>Blackmailable?</th>
+            <th>Culture</th>
+            <th>Favorite Food</th>
+            <th>Delete?</th>
         </tr>
     </thead>
 

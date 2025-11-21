@@ -190,7 +190,7 @@ END //
 DELIMITER ;
 
 -- #############################
--- UPDATE Customers
+-- UPDATE Customers (Safe Version)
 -- #############################
 DROP PROCEDURE IF EXISTS sp_UpdateCustomer;
 
@@ -214,13 +214,23 @@ BEGIN
     END;
 
     START TRANSACTION;
+
         -- Validate customer exists
         IF NOT EXISTS (SELECT 1 FROM Customers WHERE customerID = p_customerID) THEN
             SET error_message = CONCAT('No matching record found in Customers for customerID: ', p_customerID);
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
         END IF;
 
-        -- Validate foreign key references exist
+        -- Normalize empty or invalid foreign keys to NULL
+        IF p_cultureID IS NULL OR p_cultureID = 0 THEN
+            SET p_cultureID = NULL;
+        END IF;
+
+        IF p_favoriteFood IS NULL OR p_favoriteFood = 0 THEN
+            SET p_favoriteFood = NULL;
+        END IF;
+
+        -- Validate foreign key references exist (only if not NULL)
         IF p_cultureID IS NOT NULL AND NOT EXISTS (SELECT 1 FROM Cultures WHERE cultureID = p_cultureID) THEN
             SET error_message = CONCAT('Invalid cultureID: ', p_cultureID, ' does not exist in Cultures table');
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
@@ -231,14 +241,14 @@ BEGIN
             SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
         END IF;
 
-        -- Update the customer
+        -- Update only fields that are provided
         UPDATE Customers
         SET 
-            customerName = p_customerName,
-            gullibilityRating = p_gullibilityRating,
-            blackmailable = p_blackmailable,
-            cultureID = p_cultureID,
-            favoriteFood = p_favoriteFood
+            customerName = COALESCE(p_customerName, customerName),
+            gullibilityRating = COALESCE(p_gullibilityRating, gullibilityRating),
+            blackmailable = COALESCE(p_blackmailable, blackmailable),
+            cultureID = COALESCE(p_cultureID, cultureID),
+            favoriteFood = COALESCE(p_favoriteFood, favoriteFood)
         WHERE customerID = p_customerID;
 
     COMMIT;

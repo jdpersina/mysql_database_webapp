@@ -117,8 +117,74 @@ app.post('/create-new-customer', async function (req, res) {
     }
 });
 
-app.get('/update-customer', (req, res) => {
-    res.render('customer-update');
+app.get('/update-customer', async function (req, res) {
+    try {
+        const customerQuery = `SELECT customerName, gullibilityRating AS gullibility, blackmailable, Cultures.cultureName AS cultureName,
+                                    FoodItems.itemName AS favoriteFood, customerID
+                                    FROM Customers
+                                    LEFT JOIN Cultures ON Customers.cultureID = Cultures.cultureID
+                                    LEFT JOIN FoodItems ON Customers.favoriteFood = FoodItems.foodItemID
+                                    ;`;
+        const [customers] = await db.query(customerQuery);
+
+        const foodItemQuery = `SELECT * from FoodItems;`
+        const [foodItems] = await db.query(foodItemQuery)
+
+        const cultureQuery = `SELECT * from Cultures;`
+        const [cultures] = await db.query(cultureQuery)
+
+        res.render('customer-update', { customers: customers, foodItems: foodItems, cultures: cultures });
+    } catch (error) {
+        console.error('Error executing queries:', error);
+        // Send a generic error message to the browser
+        res.status(500).send(
+            'An error occurred while executing the database queries.'
+        );
+    }
+});
+
+app.post('/update-existing-customer', async function (req, res) {
+    try {
+        // Parse frontend form information
+        let data = req.body;
+
+        // Create and execute our queries
+        // Using parameterized queries (Prevents SQL injection attacks)
+        const query1 = `CALL sp_UpdateCustomer(?, ?, ?, ?, ?, ?);`;
+
+        const sanitize = (value) => {
+            if (value === undefined || value === null || value === "" || value === "NULL") {
+                return null;
+            }
+            return value;
+        };
+
+        const customerID = parseInt(data.customerID); // always required
+        const customerName = sanitize(data.customerName); // required, but still sanitize
+        const gullibilityRating = sanitize(data.gullibilityRating) !== null ? parseInt(data.gullibilityRating) : null;
+        const blackmailable = sanitize(data.blackmailable) !== null ? parseInt(data.blackmailable) : null;
+        const cultureID = sanitize(data.cultureID) !== null ? parseInt(data.cultureID) : null;
+        const favoriteFoodID = sanitize(data.favoriteFoodID) !== null ? parseInt(data.favoriteFoodID) : null;
+
+        // Store ID of last inserted row
+        const [rows] = await db.query(query1, [
+            customerID,
+            customerName,
+            gullibilityRating,
+            blackmailable,
+            cultureID,
+            favoriteFoodID
+        ]);
+
+        // Redirect the user to the updated webpage
+        res.redirect('/customers');
+    } catch (error) {
+        console.error('Error executing queries:', error);
+        // Send a generic error message to the browser
+        res.status(500).send(
+            'An error occurred while executing the database queries.'
+        );
+    }
 });
 
 app.post('/delete-customer', async function (req, res) {
@@ -246,16 +312,23 @@ app.get('/update-supplier', (req, res) => {
 
 /* OTHER ROUTES */
 
-app.get('/cultures', (req, res) => {
-    res.render('cultures');
+app.get('/cultures', async (req, res) => {
+    const culturesQuery = `SELECT * from Cultures;`;
+    const [cultures] = await db.query(culturesQuery);
+
+    res.render('cultures', { cultures: cultures });
 });
 
-app.get('/menu', (req, res) => {
-    res.render('fooditems');
-});
+app.get('/menu', async (req, res) => {
 
-app.get('/invoices', (req, res) => {
-    res.render('invoices');
+    const foodItemQuery = ` 
+        SELECT f.foodItemID, f.itemName, c.cultureName
+            FROM FoodItems f
+            LEFT JOIN Cultures c ON f.cultureID = c.cultureID
+            ORDER BY f.itemName;`
+    const [foodItems] = await db.query(foodItemQuery)
+
+    res.render('fooditems', {foodItems: foodItems});
 });
 
 /*
