@@ -76,8 +76,15 @@ app.get('/customers', async function (req, res) {
     }
 });
 
-app.get('/add-customer', (req, res) => {
-    res.render('customer-new');
+app.get('/add-customer', async (req, res) => {
+
+    const foodItemsQuery = `SELECT * from FoodItems;`;
+    const [foodItems] = await db.query(foodItemsQuery);
+
+    const culturesQuery = `SELECT * from Cultures;`;
+    const [cultures] = await db.query(culturesQuery);
+
+    res.render('customer-new', { cultures: cultures, foodItems: foodItems });
 });
 
 app.get('/update-customer', (req, res) => {
@@ -197,8 +204,11 @@ app.get('/invoices/suppliers', async function (req, res) {
     }
 });
 
-app.get('/add-supplier', (req, res) => {
-    res.render('supplier-new');
+app.get('/add-supplier', async (req, res) => {
+    const culturesQuery = `SELECT * from Cultures;`;
+    const [cultures] = await db.query(culturesQuery);
+
+    res.render('supplier-new', {cultures: cultures});
 });
 app.get('/update-supplier', (req, res) => {
     res.render('supplier-update');
