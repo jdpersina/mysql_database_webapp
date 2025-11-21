@@ -58,8 +58,8 @@ app.post('/reset', async function (req, res) {
 /* CUSTOMER ROUTES */ 
 app.get('/customers', async function (req, res) {
     try {
-        const customerQuery = `SELECT customerName, gullibilityRating AS gullibility, blackmailable, cultureName,
-                                    favoriteFood, customerID
+        const customerQuery = `SELECT customerName, gullibilityRating AS gullibility, blackmailable, Cultures.cultureName AS cultureName,
+                                    FoodItems.itemName AS favoriteFood, customerID
                                     FROM Customers
                                     LEFT JOIN Cultures ON Customers.cultureID = Cultures.cultureID
                                     LEFT JOIN FoodItems ON Customers.favoriteFood = FoodItems.foodItemID
@@ -85,6 +85,36 @@ app.get('/add-customer', async (req, res) => {
     const [cultures] = await db.query(culturesQuery);
 
     res.render('customer-new', { cultures: cultures, foodItems: foodItems });
+});
+
+app.post('/create-new-customer', async function (req, res) {
+    try {
+        // Parse frontend form information
+        let data = req.body;
+
+        // Create and execute our queries
+        // Using parameterized queries (Prevents SQL injection attacks)
+        const query1 = `CALL sp_CreateCustomer(?, ?, ?, ?, ?);`;
+
+        // Store ID of last inserted row
+        const [rows] = await db.query(query1, [
+            data.create_customer_name,
+            data.create_customer_gullibility,
+            data.create_customer_blackmailable,
+            data.create_customer_culture,
+            data.create_customer_favorite_food
+        ]);
+
+
+        // Redirect the user to the updated webpage
+        res.redirect('/customers');
+    } catch (error) {
+        console.error('Error executing queries:', error);
+        // Send a generic error message to the browser
+        res.status(500).send(
+            'An error occurred while executing the database queries.'
+        );
+    }
 });
 
 app.get('/update-customer', (req, res) => {
