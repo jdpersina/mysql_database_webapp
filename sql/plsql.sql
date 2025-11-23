@@ -304,3 +304,91 @@ DELIMITER ;
 -- Citation: Starter code provided on Canvas in: Exploration - Implementing CUD operations in your app, accessed on 2025-11-16
 -- Citation: Claude LLM, accessed on 2025-11-16 with prompt: "Please update this stored procedure using data from this ddl to reflect deleting a customer [files provided]"
 -- Citation: Claude LLM, accessed on 2025-11-21 with prompt: "Can you please create update and create procedures following this schema? [file provided]"
+
+-- #############################
+-- DELETE SupplierInvoice
+-- #############################
+
+DROP PROCEDURE IF EXISTS sp_DeleteSupplierInvoice;
+
+DELIMITER //
+CREATE PROCEDURE sp_DeleteSupplierInvoice(IN p_supplierInvoiceID INT)
+BEGIN
+    DECLARE error_message VARCHAR(255); 
+
+    -- error handling
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        -- Roll back the transaction on any error
+        ROLLBACK;
+        -- Propagate the custom error message to the caller
+        RESIGNAL;
+    END;
+
+    -- This query will Delete the Supplier Invoice (For tax purposes)
+    START TRANSACTION;
+
+        -- 1) Delete FoodItems from Invoice
+        DELETE FROM SupplierInvoice_Has_FoodItems
+        WHERE supplierInvoiceID = p_supplierInvoiceID;  
+
+        -- 2) Delete the invoice itself
+        DELETE FROM SupplierInvoices
+        WHERE supplierInvoiceID = p_supplierInvoiceID;
+
+        -- Validate that the record was deleted
+        IF ROW_COUNT() = 0 THEN
+            SET error_message = CONCAT('No matching record found in SupplierInvoices for ID: ', p_supplierInvoiceID);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
+        END IF;
+
+    COMMIT;
+
+END //
+DELIMITER ;
+
+-- Citation: Claude LLM, accessed on 2025-11-22 with prompt: "Let's turn the highlighted SQL code into a stored procedure. [file provided]"
+
+-- #############################
+-- DELETE CustomerInvoice
+-- #############################
+
+DROP PROCEDURE IF EXISTS sp_DeleteCustomerInvoice;
+
+DELIMITER //
+CREATE PROCEDURE sp_DeleteCustomerInvoice(IN p_customerInvoiceID INT)
+BEGIN
+    DECLARE error_message VARCHAR(255); 
+
+    -- error handling
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        -- Roll back the transaction on any error
+        ROLLBACK;
+        -- Propagate the custom error message to the caller
+        RESIGNAL;
+    END;
+
+    -- This query will Delete the Customer Invoice (For tax purposes)
+    START TRANSACTION;
+
+        -- 1) Delete FoodItems from Invoice
+        DELETE FROM CustomerInvoice_Has_FoodItems
+        WHERE customerInvoiceID = p_customerInvoiceID;  
+
+        -- 2) Delete the invoice itself
+        DELETE FROM CustomerInvoices
+        WHERE customerInvoiceID = p_customerInvoiceID;
+
+        -- Validate that the record was deleted
+        IF ROW_COUNT() = 0 THEN
+            SET error_message = CONCAT('No matching record found in CustomerInvoices for ID: ', p_customerInvoiceID);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
+        END IF;
+
+    COMMIT;
+
+END //
+DELIMITER ;
+
+-- Citation: 11/22/25 Adapted from previous procedure sp_DeleteSupplierInvoice
