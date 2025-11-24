@@ -8,7 +8,8 @@
             <th>Customer Name</th>
             <th>Item Count</th>
             <th>Items Provided</th>
-            <th></th>
+            <th>Delete Invoice?</th>
+            <th>Edit Invoice?</th>
         </tr>
     </thead>
 
@@ -20,9 +21,10 @@
             <td>{{this.customerName}}</td>
             <td>{{this.itemCount}}</td>
             <td>{{this.items}}</td>
+            
 
             {{! DELETE form }}
-            <form id='delete_invoice_form'>
+            <form id='delete_invoice_form' method='POST' action='/invoices/customers/delete'>
                 <input type='hidden' name='delete_invoice_id' value='{{this.customerInvoiceID}}' />
                 <td>
                     <button type='submit' class='btn-delete'>
@@ -30,14 +32,21 @@
                     </button>
                 </td>
             </form>
+
+            <td>
+                <a href='/invoices/customers/edit/{{this.customerInvoiceID}}'>
+                    <button type='button' class='btn-secondary'>Edit</button>
+                </a>
+            </td>
         </tr>
         {{/each}}
     </tbody>
 </table>
 
 {{! CREATE form }}
+{{! Citation: Claude LLM accessed on 2025-11-24 with prompt: "Can you please update this form so that users can add multiple items to an invoice? [HTML provided]"}}
 <h2>Create New Invoice</h2>
-<form class='cuForm' id='create_invoice_form'>
+<form class='cuForm' id='create_invoice_form' method='POST' action='/invoices/customers/add'>
     <label for='create_invoice_customer'>Customer: </label>
     <select name='create_invoice_customer' id='create_invoice_customer' required>
         <option value='' disabled selected>Select a Customer</option>
@@ -46,19 +55,150 @@
         {{/each}}
     </select>
 
-    <label for='create_invoice_fooditem'>Food/Drink Item: </label>
-    <select name='create_invoice_fooditem' id='create_invoice_fooditem' required>
-        <option value='' disabled selected>Select an Item</option>
-        {{#each foodItems}}
-        <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
-        {{/each}}
-    </select>
+    <fieldset id='invoice_items'>
+        <legend>Invoice Items</legend>
+        <div class='invoice-item' data-item-index='0'>
+            <label for='create_invoice_fooditem_0'>Food/Drink Item: </label>
+            <select name='create_invoice_fooditem[]' id='create_invoice_fooditem_0' required>
+                <option value='' disabled selected>Select an Item</option>
+                {{#each foodItems}}
+                <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
+                {{/each}}
+            </select>
 
-    <label for='create_invoice_quantity'>Quantity:</label>
-    <input type='number' name='create_invoice_quantity' id='create_invoice_quantity' min='1' value='1' required />
+            <label for='create_invoice_quantity_0'>Quantity:</label>
+            <input type='number' name='create_invoice_quantity[]' id='create_invoice_quantity_0' min='1' value='1' required />
+            
+            <button type='button' class='remove-item-btn btn-delete' style='display:none;'>Remove</button>
+        </div>
+    </fieldset>
 
+    <button type='button' id='add_item_btn' class='btn-secondary'>Add Another Item</button>
+    
     <input type='submit' value='Create Invoice' />
 </form>
+
+<script>
+    let itemIndex = 1;
+    const foodItemsData = [
+        {{#each foodItems}}
+        { id: '{{this.foodItemID}}', name: '{{this.itemName}}' }{{#unless @last}},{{/unless}}
+        {{/each}}
+    ];
+    
+    document.getElementById('add_item_btn').addEventListener('click', function() {
+        const container = document.getElementById('invoice_items');
+        const newItem = document.createElement('div');
+        newItem.className = 'invoice-item';
+        newItem.setAttribute('data-item-index', itemIndex);
+        
+        newItem.innerHTML = `
+            <label for='create_invoice_fooditem_${itemIndex}'>Food/Drink Item: </label>
+            <select name='create_invoice_fooditem[]' id='create_invoice_fooditem_${itemIndex}' required>
+                <option value='' disabled selected>Select an Item</option>
+                {{#each foodItems}}
+                <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
+                {{/each}}
+            </select>
+
+            <label for='create_invoice_quantity_${itemIndex}'>Quantity:</label>
+            <input type='number' name='create_invoice_quantity[]' id='create_invoice_quantity_${itemIndex}' min='1' value='1' required />
+            
+            <button type='button' class='remove-item-btn btn-delete'>Remove</button>
+        `;
+        
+        container.appendChild(newItem);
+        itemIndex++;
+        
+        updateRemoveButtons();
+        updateAvailableItems();
+    });
+    
+    document.getElementById('invoice_items').addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-item-btn')) {
+            e.target.closest('.invoice-item').remove();
+            updateRemoveButtons();
+            updateAvailableItems();
+        }
+    });
+    
+    // Update available items when selections change
+    document.getElementById('invoice_items').addEventListener('change', function(e) {
+        if (e.target.name === 'create_invoice_fooditem[]') {
+            updateAvailableItems();
+        }
+    });
+    
+    function updateRemoveButtons() {
+        const items = document.querySelectorAll('.invoice-item');
+        const removeButtons = document.querySelectorAll('.remove-item-btn');
+        
+        if (items.length === 1) {
+            removeButtons.forEach(btn => btn.style.display = 'none');
+        } else {
+            removeButtons.forEach(btn => btn.style.display = 'inline-block');
+        }
+    }
+    
+    function updateAvailableItems() {
+        const allSelects = document.querySelectorAll('select[name="create_invoice_fooditem[]"]');
+        const selectedValues = new Set();
+        
+        // Collect all currently selected values
+        allSelects.forEach(select => {
+            if (select.value) {
+                selectedValues.add(select.value);
+            }
+        });
+        
+        // Update each select dropdown
+        allSelects.forEach(select => {
+            const currentValue = select.value;
+            
+            // Clear and rebuild options
+            select.innerHTML = '<option value="" disabled selected>Select an Item</option>';
+            
+            foodItemsData.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item.id;
+                option.textContent = item.name;
+                
+                // Disable if already selected in another dropdown (but not this one)
+                if (selectedValues.has(item.id) && item.id !== currentValue) {
+                    option.disabled = true;
+                    option.textContent += ' (Already added)';
+                }
+                
+                select.appendChild(option);
+            });
+            
+            // Restore the current selection
+            if (currentValue) {
+                select.value = currentValue;
+            }
+        });
+    }
+    
+    // Prevent form submission if there are duplicates
+    document.getElementById('create_invoice_form').addEventListener('submit', function(e) {
+        const allSelects = document.querySelectorAll('select[name="create_invoice_fooditem[]"]');
+        const selectedValues = [];
+        
+        allSelects.forEach(select => {
+            if (select.value) {
+                selectedValues.push(select.value);
+            }
+        });
+        
+        const uniqueValues = new Set(selectedValues);
+        
+        if (selectedValues.length !== uniqueValues.size) {
+            e.preventDefault();
+            alert('Error: You cannot add the same item multiple times. Please select different items or increase the quantity.');
+            return false;
+        }
+    });
+</script>
 
 {{! UPDATE form }}
 <h2>Update an Invoice</h2>
@@ -94,3 +234,7 @@
 
     <input type='submit' value='Update Invoice' />
 </form>
+
+
+
+

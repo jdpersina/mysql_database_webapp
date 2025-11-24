@@ -256,6 +256,9 @@ BEGIN
 END //
 DELIMITER ;
 
+-- Citation: Claude LLM, accessed on 2025-11-21 with prompt: "Can you please create update and create procedures following this schema? [file provided]"
+
+
 
 -- #############################
 -- DELETE Customers
@@ -303,7 +306,213 @@ DELIMITER ;
 
 -- Citation: Starter code provided on Canvas in: Exploration - Implementing CUD operations in your app, accessed on 2025-11-16
 -- Citation: Claude LLM, accessed on 2025-11-16 with prompt: "Please update this stored procedure using data from this ddl to reflect deleting a customer [files provided]"
--- Citation: Claude LLM, accessed on 2025-11-21 with prompt: "Can you please create update and create procedures following this schema? [file provided]"
+
+
+-- #############################
+-- CREATE CustomerInvoice
+-- #############################
+
+DROP PROCEDURE IF EXISTS sp_CreateCustomerInvoice;
+DELIMITER //
+CREATE PROCEDURE sp_CreateCustomerInvoice(
+    IN p_customerID INT,
+    OUT p_invoiceID INT
+)
+BEGIN
+    DECLARE v_customerExists INT;
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    SELECT COUNT(*) INTO v_customerExists 
+    FROM Customers 
+    WHERE customerID = p_customerID;
+    
+    IF v_customerExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Customer ID does not exist';
+    END IF;
+    
+    INSERT INTO CustomerInvoices (customerID) 
+    VALUES (p_customerID);
+    
+    SET p_invoiceID = LAST_INSERT_ID();
+    
+    COMMIT;
+    
+    SELECT p_invoiceID AS newInvoiceID;
+END //
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS sp_AddCustomerInvoiceItem;
+DELIMITER //
+CREATE PROCEDURE sp_AddCustomerInvoiceItem(
+    IN p_invoiceID INT,
+    IN p_foodItemID INT,
+    IN p_quantity INT
+)
+BEGIN
+    DECLARE v_invoiceExists INT;
+    DECLARE v_foodItemExists INT;
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Validate invoice exists
+    SELECT COUNT(*) INTO v_invoiceExists 
+    FROM CustomerInvoices 
+    WHERE customerInvoiceID = p_invoiceID;
+    
+    IF v_invoiceExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invoice ID does not exist';
+    END IF;
+    
+    -- Validate food item exists
+    SELECT COUNT(*) INTO v_foodItemExists 
+    FROM FoodItems 
+    WHERE foodItemID = p_foodItemID;
+    
+    IF v_foodItemExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Food item ID does not exist';
+    END IF;
+    
+    -- Validate quantity
+    IF p_quantity <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Quantity must be greater than zero';
+    END IF;
+    
+    INSERT INTO CustomerInvoice_Has_FoodItems (customerInvoiceID, foodItemID, quantity)
+    VALUES (p_invoiceID, p_foodItemID, p_quantity);
+    
+    COMMIT;
+END //
+DELIMITER ;
+
+-- Citation: Claude LLM, accessed on 2025-11-24 with prompt: "What is the best practice for creating and updating a customer-facing invoice for a schema like this? [ simplified file provided]"
+
+
+-- #############################
+-- UPDATE CustomerInvoice
+-- #############################
+
+-- Update the customer on an invoice
+DROP PROCEDURE IF EXISTS sp_UpdateCustomerInvoiceCustomer;
+DELIMITER //
+CREATE PROCEDURE sp_UpdateCustomerInvoiceCustomer(
+    IN p_invoiceID INT,
+    IN p_customerID INT
+)
+BEGIN
+    DECLARE v_invoiceExists INT;
+    DECLARE v_customerExists INT;
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Validate invoice exists
+    SELECT COUNT(*) INTO v_invoiceExists 
+    FROM CustomerInvoices 
+    WHERE customerInvoiceID = p_invoiceID;
+    
+    IF v_invoiceExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Invoice ID does not exist';
+    END IF;
+    
+    -- Validate customer exists
+    SELECT COUNT(*) INTO v_customerExists 
+    FROM Customers 
+    WHERE customerID = p_customerID;
+    
+    IF v_customerExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Customer ID does not exist';
+    END IF;
+    
+    UPDATE CustomerInvoices 
+    SET customerID = p_customerID 
+    WHERE customerInvoiceID = p_invoiceID;
+    
+    COMMIT;
+END //
+DELIMITER ;
+
+-- Remove a specific item from an invoice
+DROP PROCEDURE IF EXISTS sp_RemoveCustomerInvoiceItem;
+DELIMITER //
+CREATE PROCEDURE sp_RemoveCustomerInvoiceItem(
+    IN p_invoiceID INT,
+    IN p_foodItemID INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    DELETE FROM CustomerInvoice_Has_FoodItems
+    WHERE customerInvoiceID = p_invoiceID 
+    AND foodItemID = p_foodItemID;
+    
+    COMMIT;
+END //
+DELIMITER ;
+
+-- Update quantity for an item on an invoice
+DROP PROCEDURE IF EXISTS sp_UpdateCustomerInvoiceQuantity;
+DELIMITER //
+CREATE PROCEDURE sp_UpdateCustomerInvoiceQuantity(
+    IN p_invoiceID INT,
+    IN p_foodItemID INT,
+    IN p_quantity INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    IF p_quantity <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Quantity must be greater than zero';
+    END IF;
+    
+    UPDATE CustomerInvoice_Has_FoodItems
+    SET quantity = p_quantity
+    WHERE customerInvoiceID = p_invoiceID 
+    AND foodItemID = p_foodItemID;
+    
+    COMMIT;
+END //
+DELIMITER ;
+
+-- Citation: Claude LLM, accessed on 2025-11-24 with prompt: "I need to develop a stored procedure to update a customer invoice based on this schema [simplified SQL provided]"
+
+
 
 -- #############################
 -- DELETE SupplierInvoice

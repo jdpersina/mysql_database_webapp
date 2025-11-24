@@ -9,7 +9,11 @@ const PORT = 8188;
 
 // Handlebars
 const { engine } = require('express-handlebars');
-app.engine('.hbs', engine({extname: ".hbs"}));
+app.engine('.hbs', engine({extname: ".hbs",
+    helpers: {
+        eq: (a, b) => a == b
+    }
+}));
 app.set('view engine', '.hbs');
 
 // Database 
@@ -22,6 +26,7 @@ app.use(express.urlencoded({extended: true}));
 // Serve static files (CSS, JS, images) from 'public' folder
 app.use(express.static('public'));
 
+// Citation: Claude LLM, accessed 2025-11-24 with prompt, "Can you please help me add the Handlebars helper to my Express setup? [setup code provided]"
 
 /*
     ROUTES
@@ -218,7 +223,11 @@ app.get('/invoices/customers', async function (req, res) {
                                     ci.customerInvoiceID,
                                     c.customerName,
                                     COUNT(cihf.foodItemID) AS itemCount,
-                                    GROUP_CONCAT(fi.itemName SEPARATOR ', ') AS items
+                                    GROUP_CONCAT(
+                                        CONCAT(fi.itemName, ' (', cihf.quantity, ')')
+                                        ORDER BY fi.itemName
+                                        SEPARATOR ', '
+                                    ) AS items
                                 FROM CustomerInvoices ci
                                 INNER JOIN Customers c ON ci.customerID = c.customerID
                                 LEFT JOIN CustomerInvoice_Has_FoodItems cihf ON ci.customerInvoiceID = cihf.customerInvoiceID
@@ -234,6 +243,183 @@ app.get('/invoices/customers', async function (req, res) {
         const [customers] = await db.query(customerQuery)
 
         res.render('customer-invoices', { invoices: cInvoices, foodItems: foodItems, customers: customers });
+    } catch (error) {
+        console.error('Error executing queries:', error);
+        // Send a generic error message to the browser
+        res.status(500).send(
+            'An error occurred while executing the database queries.'
+        );
+    }
+});
+
+// Citation: Claude LLM, accessed on 2025-11-24 with prompt: "Can this query please also provide the item quantity count? [query provided]"
+
+app.post('/invoices/customers/add', async (req, res) => {
+    const { create_invoice_customer, create_invoice_fooditem, create_invoice_quantity } = req.body;
+    
+    try {
+        // Start transaction
+        await db.query('START TRANSACTION');
+        
+        // Create the invoice
+        const [invoiceResult] = await db.query(
+            'CALL sp_CreateCustomerInvoice(?, @invoiceID)',
+            [create_invoice_customer]
+        );
+        const invoiceID = invoiceResult[0][0].newInvoiceID;
+        
+        // Ensure fooditem and quantity are arrays
+        const foodItems = Array.isArray(create_invoice_fooditem) 
+            ? create_invoice_fooditem 
+            : [create_invoice_fooditem];
+        const quantities = Array.isArray(create_invoice_quantity) 
+            ? create_invoice_quantity 
+            : [create_invoice_quantity];
+        
+        // Add each item to the invoice
+        for (let i = 0; i < foodItems.length; i++) {
+            await db.query(
+                'CALL sp_AddCustomerInvoiceItem(?, ?, ?)',
+                [invoiceID, foodItems[i], quantities[i]]
+            );
+        }
+        
+        await db.query('COMMIT');
+        res.redirect('/invoices/customers');
+        
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error('Error creating invoice:', error);
+        res.status(500).send('Error creating invoice');
+    }
+});
+
+// Get single invoice for editing
+app.get('/invoices/customers/edit/:id', async (req, res) => {
+    const invoiceID = req.params.id;
+
+    console.log("Invoice ID:", invoiceID)
+    
+    try {
+        // Get invoice with customer info
+        const [invoice] = await db.query(`
+            SELECT 
+                ci.customerInvoiceID,
+                ci.customerID,
+                c.customerName
+            FROM CustomerInvoices ci
+            JOIN Customers c ON ci.customerID = c.customerID
+            WHERE ci.customerInvoiceID = ?
+        `, [invoiceID]);
+        
+        if (invoice.length === 0) {
+            return res.status(404).send('Invoice not found');
+        }
+        
+        // Get items on this invoice
+        const [items] = await db.query(`
+            SELECT 
+                fi.foodItemID,
+                fi.itemName,
+                cif.quantity
+            FROM CustomerInvoice_Has_FoodItems cif
+            JOIN FoodItems fi ON cif.foodItemID = fi.foodItemID
+            WHERE cif.customerInvoiceID = ?
+            ORDER BY fi.itemName
+        `, [invoiceID]);
+        
+        // Get all customers for dropdown
+        const [customers] = await db.query('SELECT customerID, customerName FROM Customers ORDER BY customerName');
+        
+        // Get all food items for dropdown
+        const [foodItems] = await db.query('SELECT foodItemID, itemName FROM FoodItems ORDER BY itemName');
+        
+        res.render('customer-invoice-edit', { 
+            invoice: invoice[0],
+            items,
+            customers, 
+            foodItems 
+        });
+        
+    } catch (error) {
+        console.error('Error fetching invoice:', error);
+        res.status(500).send('Error fetching invoice');
+    }
+});
+
+// Update invoice customer
+app.post('/invoices/customers/update/:id', async (req, res) => {
+    const invoiceID = req.params.id;
+    const { update_invoice_customer } = req.body;
+    
+    try {
+        await db.query('CALL sp_UpdateCustomerInvoiceCustomer(?, ?)', [invoiceID, update_invoice_customer]);
+        res.redirect('/invoices/customers');
+    } catch (error) {
+        console.error('Error updating invoice customer:', error);
+        res.status(500).send('Error updating invoice');
+    }
+});
+
+// Add item to existing invoice
+app.post('/invoices/customers/:id/add-item', async (req, res) => {
+    const invoiceID = req.params.id;
+    const { foodItemID, quantity } = req.body;
+    
+    try {
+        await db.query('CALL sp_AddCustomerInvoiceItem(?, ?, ?)', [invoiceID, foodItemID, quantity]);
+        res.redirect(`/invoices/customers/edit/${invoiceID}`);
+    } catch (error) {
+        console.error('Error adding item:', error);
+        res.status(500).send('Error adding item');
+    }
+});
+
+// Update item quantity
+app.post('/invoices/customers/:invoiceID/update-item/:foodItemID', async (req, res) => {
+    const { invoiceID, foodItemID } = req.params;
+    const { quantity } = req.body;
+    
+    try {
+        await db.query('CALL sp_UpdateCustomerInvoiceQuantity(?, ?, ?)', [invoiceID, foodItemID, quantity]);
+        res.redirect(`/invoices/customers/edit/${invoiceID}`);
+    } catch (error) {
+        console.error('Error updating item quantity:', error);
+        res.status(500).send('Error updating item');
+    }
+});
+
+// Remove item from invoice
+app.post('/invoices/customers/:invoiceID/remove-item/:foodItemID', async (req, res) => {
+    const { invoiceID, foodItemID } = req.params;
+    
+    try {
+        await db.query('CALL sp_RemoveCustomerInvoiceItem(?, ?)', [invoiceID, foodItemID]);
+        res.redirect(`/invoices/customers/edit/${invoiceID}`);
+    } catch (error) {
+        console.error('Error removing item:', error);
+        res.status(500).send('Error removing item');
+    }
+});
+
+// Citation: Claude LLM accessed 2025-11-24 with prompt: "What is the best practice for handling routing in Express for updating customer invoices?"
+
+app.post('/invoices/customers/delete', async function (req, res) {
+    try {
+        // Parse frontend form information
+        let data = req.body;
+
+        console.log("Data", data)
+
+        // Create and execute our query
+        // Using parameterized queries (Prevents SQL injection attacks)
+        const query1 = `CALL sp_DeleteCustomerInvoice(?);`;
+        await db.query(query1, [data.delete_invoice_id]);
+
+        console.log(`DELETE customer invoice. ID: ${data.delete_invoice_id}`);
+
+        // Redirect the user to the updated webpage data
+        res.redirect('/invoices/customers');
     } catch (error) {
         console.error('Error executing queries:', error);
         // Send a generic error message to the browser
