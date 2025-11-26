@@ -1,0 +1,107 @@
+<h2>Edit Invoice #{{invoice.customerInvoiceID}}</h2>
+
+<a href='/invoices/customers'>← Back to Invoices</a>
+
+{{! Update Customer }}
+<h3>Customer Information</h3>
+<form class='cuForm' method='POST' action='/invoices/customers/update/{{invoice.customerInvoiceID}}'>
+    <label for='update_invoice_customer'>Customer: </label>
+    <select name='update_invoice_customer' id='update_invoice_customer' required>
+        {{#each customers}}
+        <option value='{{this.customerID}}' {{#if (eq this.customerID ../invoice.customerID)}}selected{{/if}}>
+            {{this.customerName}}
+        </option>
+        {{/each}}
+    </select>
+    
+    <input type='submit' value='Update Customer' />
+</form>
+
+{{! Current Items }}
+<h3>Invoice Items</h3>
+{{#if items}}
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each items}}
+            <tr>
+                <td>{{this.itemName}}</td>
+                <td>
+                    <form class='cuForm' method='POST' action='/invoices/customers/{{../invoice.customerInvoiceID}}/update-item/{{this.foodItemID}}' style='display:inline;'>
+                        <input type='number' name='quantity' value='{{this.quantity}}' min='1' required style='width: 80px; display:inline;' />
+                        <input type='submit' value='Update' style='display:inline;' />
+                    </form>
+                </td>
+                <td>
+                    <form method='POST' action='/invoices/customers/{{../invoice.customerInvoiceID}}/remove-item/{{this.foodItemID}}' style='display:inline;'>
+                        <button type='submit' class='btn-delete'>Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {{/each}}
+        </tbody>
+    </table>
+{{else}}
+    <p>No items on this invoice yet.</p>
+{{/if}}
+
+{{! Add New Item }}
+<h3>Add Item to Invoice</h3>
+<form class='cuForm' id='add_item_form' method='POST' action='/invoices/customers/{{invoice.customerInvoiceID}}/add-item'>
+    <label for='add_fooditem'>Food/Drink Item: </label>
+    <select name='foodItemID' id='add_fooditem' required>
+        <option value='' disabled selected>Select an Item</option>
+        {{#each foodItems}}
+        <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
+        {{/each}}
+    </select>
+
+    <label for='add_quantity'>Quantity:</label>
+    <input type='number' name='quantity' id='add_quantity' min='1' value='1' required />
+
+    <input type='submit' value='Add Item' />
+</form>
+
+<script>
+    // Existing item IDs on this invoice
+    const existingItemIDs = new Set([
+        {{#each items}}
+        '{{this.foodItemID}}'{{#unless @last}},{{/unless}}
+        {{/each}}
+    ]);
+    
+    // Disable items that are already on the invoice
+    function updateAvailableItems() {
+        const select = document.getElementById('add_fooditem');
+        const options = select.querySelectorAll('option');
+        
+        options.forEach(option => {
+            if (option.value && existingItemIDs.has(option.value)) {
+                option.disabled = true;
+                option.textContent = option.textContent.replace(' (Already on invoice)', '') + ' (Already on invoice)';
+            }
+        });
+    }
+    
+    // Run on page load
+    updateAvailableItems();
+    
+    // Prevent form submission if trying to add existing item
+    document.getElementById('add_item_form').addEventListener('submit', function(e) {
+        const selectedValue = document.getElementById('add_fooditem').value;
+        
+        if (existingItemIDs.has(selectedValue)) {
+            e.preventDefault();
+            alert('Error: This item is already on the invoice. Please update the quantity of the existing item instead.');
+            return false;
+        }
+    });
+</script>
+
+{{! Citation: Claude LLM accessed on 2025-11-24 with prompt: "Can you please help me modify this form to edit an existing customer invoice? [provided Add Customer Invoice form]" }}
