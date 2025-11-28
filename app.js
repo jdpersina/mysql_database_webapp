@@ -443,8 +443,6 @@ app.get('/suppliers', async function (req, res) {
         const [cultures] = await db.query(culturesQuery);
 
 
-        // Render the bsg-people.hbs file, and also send the renderer
-        //  an object that contains our bsg_people and bsg_homeworld information
         res.render('suppliers', { suppliers: suppliers, foodItems: foodItems, cultures: cultures});
     } catch (error) {
         console.error('Error executing queries:', error);
@@ -492,9 +490,64 @@ app.get('/add-supplier', async (req, res) => {
 
     res.render('supplier-new', {cultures: cultures});
 });
-app.get('/update-supplier', (req, res) => {
-    res.render('supplier-update');
+
+app.get('/update-supplier', async (req, res) => {
+    try {
+        const [suppliers] = await db.query('SELECT * FROM Suppliers;');
+        const [cultures]  = await db.query('SELECT * FROM Cultures;');
+
+        res.render('supplier-update', { suppliers, cultures });
+    } catch (error) {
+        console.error('Error loading suppliers for update:', error);
+        res.status(500).send('Error loading suppliers for update.');
+    }
 });
+
+app.post('/update-existing-supplier', async (req, res) => {
+    try {
+        const data = req.body;
+
+        const query = 'CALL sp_UpdateSupplier(?, ?, ?, ?, ?);';
+
+        const [rows] = await db.query(query, [
+            data.update_supplier_id,
+            data.update_supplier_name,
+            data.update_supplier_smuggler,
+            data.update_supplier_blackmailable,
+            data.update_supplier_culture
+        ]);
+
+        res.redirect('/suppliers');
+    } catch (error) {
+        console.error('Error updating supplier:', error);
+        res.status(500).send('An error occurred while executing the database queries.');
+    }
+});
+
+app.post('/create-new-supplier', async (req, res) => {
+    try {
+		//Parse Frontend form info
+        const data = req.body;
+
+        // Create and execute our queries using parameterized queries 
+        const query = 'CALL sp_CreateSupplier(?, ?, ?, ?);';
+        
+        const [rows] = await db.query(query, [
+            data.create_supplier_name,
+            data.create_supplier_smuggler,
+            data.create_supplier_blackmailable,
+            data.create_supplier_culture
+        ]);
+
+        // Go back to the suppliers page to see the new row
+        res.redirect('/suppliers');
+    } catch (error) {
+        console.error('Error creating supplier:', error);
+        res.status(500).send('An error occurred while executing database queries');
+    }
+});
+
+// CITATION: The structure and approach for these supplier routes were inspired by the customer routes above, following best practices for Express routing and error handling.
 
 /* OTHER ROUTES */
 

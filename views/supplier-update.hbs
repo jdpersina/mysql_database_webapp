@@ -1,38 +1,44 @@
 {{! UPDATE form }}
-<h1>Update a Supplier</h2>
-<form class='cuForm' id='update_supplier_form'>
-    <label for='update_supplier_id'>Supplier to Update: </label>
-    <select name='update_supplier_id' id='update_supplier_id' required>
-        <option value='' disabled selected>Select a Supplier</option>
+<h1>Update a Supplier</h1>
+
+<form class="cuForm" id="update_supplier_form" method="POST" action="/update-existing-supplier">
+    <label for="update_supplier_id">Supplier to Update: </label>
+    <select name="update_supplier_id" id="update_supplier_id" required>
+        <option value="" disabled selected>Select a Supplier</option>
         {{#each suppliers}}
-        <option value='{{this.supplierID}}' required>
-            {{this.supplierID}}
-            -
-            {{this.supplierName}}
+        <option value="{{this.supplierID}}">
+            {{this.supplierID}} - {{this.supplierName}}
         </option>
         {{/each}}
     </select>
 
-    <label for='update_supplier_gullibility'>Gullibility Rating: </label>
-    <input type='number' name='update_supplier_gullibility' id='update_supplier_gullibility' min='0' />
+    <p>Leave a field blank (or on "Keep existing") to not change that value.</p>
 
-    <label for='update_supplier_blackmailable'>Blackmailable: </label>
-    <select name='update_supplier_blackmailable' id='update_supplier_blackmailable'>
-        <option value='' disabled selected>Select Option</option>
-        <option value='0'>No</option>
-        <option value='1'>Yes</option>
+    <label for="update_supplier_name">Name: </label>
+    <input type="text" name="update_supplier_name" id="update_supplier_name" placeholder="Keep existing" />
+
+    <label for="update_supplier_smuggler">Smuggler: </label>
+    <select name="update_supplier_smuggler" id="update_supplier_smuggler">
+        <option value="NULL" selected>Keep existing</option>
+        <option value="0">No</option>
+        <option value="1">Yes</option>
     </select>
 
-    <label for='update_supplier_culture'>Culture: </label>
-    <select name='update_supplier_culture' id='update_supplier_culture'>
-        <option value='NULL' disabled selected>Select a Culture</option>
-        <option value='NULL'>&lt; None &gt;</option>
+    <label for="update_supplier_blackmailable">Blackmailable: </label>
+    <select name="update_supplier_blackmailable" id="update_supplier_blackmailable">
+        <option value="NULL" selected>Keep existing</option>
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+    </select>
+
+    <label for="update_supplier_culture">Culture: </label>
+    <select name="update_supplier_culture" id="update_supplier_culture">
+        <option value="NULL" selected>Keep existing</option>
+        <option value="0">&lt; None &gt;</option>
         {{#each cultures}}
-        <option value='{{this.cultureID}}'>
-            {{this.cultureName}}
-        </option>
+        <option value="{{this.cultureID}}">{{this.cultureName}}</option>
         {{/each}}
     </select>
 
-    <input type='submit' />
+    <input type="submit" value="Update Supplier" />
 </form>
