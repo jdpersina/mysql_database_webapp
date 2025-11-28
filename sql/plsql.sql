@@ -79,46 +79,75 @@ BEGIN
         FOREIGN KEY (foodItemID) REFERENCES FoodItems(foodItemID)
     );
 
-    -- Do IDs by hand because this is a category table that will rarely be updated. 
     INSERT INTO Cultures (cultureID, cultureName) VALUES 
         (1, 'Ferengi'),
         (2, 'Bajoran'),
         (3, 'Cardassian'),
         (4, 'Human'),
         (5, 'Trill'),
-        (6, 'Klingon')
+        (6, 'Klingon'),
+        (7, 'Vulcan'),
+        (8, 'Andorian')
     ;
 
     INSERT INTO FoodItems (foodItemID, itemName, cultureID) VALUES
         (1, 'Root beer', 4),
         (2, 'Yamok sauce', 3),
-        (3, 'Raktajino', 6)
+        (3, 'Raktajino', 6),
+        (4, 'Gagh', 6),
+        (5, 'Kanar', 3),
+        (6, 'Plomeek soup', 7),
+        (7, 'Hasperat', 2),
+        (8, 'Bloodwine', 6),
+        (9, 'Tube Grubs', 1),
+        (10, 'Jumja Stick', 2)
+        (11, 'Andorian Ale', 8),
+        (12, 'Ratampa Stew', 2),
+        (13, 'Prune Juice', 4),
+        (14, 'Champagne', 4),
+        (15, 'Millipede Juice', 1),
+        (16, 'Tea, Earl Grey, Hot', 4),
+        (17, 'Peanuts & Cracker Jacks', 4),
+        (18, 'Pancakes', 4),
+        (19, 'Mapa Bread', 2),
+        (20, 'Taspar Eggs', 3),
+        (21, 'Tevmel', 7),
+        (22, 'Red Spice', 7),
+        (23, 'Senarian Egg Broth', 5),
+        (24, 'Syto Beans', 5),
+        (25, 'Kytherian Crab', 1),
+        (26, 'Bacon and Eggs', 4)
     ;
 
     INSERT INTO Customers (customerName, gullibilityRating, blackmailable, cultureID, favoriteFood) VALUES
-        ('Jadzia Dax', 2, 3, 5, 3),
-        ('Miles O''Brien', 3, 3, 4, 1),
-        ('Kira Nerys', 1, 5, 2, 3)
+        ('Jadzia Dax', 2, 0, 5, 3),
+        ('Miles O''Brien', 4, 0, 4, 1),
+        ('Kira Nerys', 1, 0, 2, 7),
+        ('Benjamin Sisko', 1, 0, 4, 3),
+        ('Damar', 5, 1, 3, 5),
+        ('T''Pol', 1, 0, 7, 6),
+        ('Worf', 3, 0, 6, 4),
+        ('Rom', 5, 1, 1, 1)
     ;
 
     INSERT INTO Suppliers (supplierName, smuggler, blackmailable, cultureID) VALUES 
         ('Cassidy Yates', 1, 1, 4),
         ('Cousin Gaila', 1, 1, 1),
         ('Starfleet', 0, 0, 4)
-        ;
+    ;
 
     INSERT INTO CustomerInvoices (customerID) VALUES
-    (1),
-    (1),
-    (2),
-    (3)
+        (1),
+        (1),
+        (2),
+        (3)
     ;
 
     INSERT INTO SupplierInvoices (supplierID) VALUES
-    (3),
-    (2),
-    (1),
-    (3)
+        (3),
+        (2),
+        (1),
+        (3)
     ;
 
     INSERT INTO CustomerInvoice_Has_FoodItems (customerInvoiceID, foodItemID, quantity) VALUES 
@@ -512,6 +541,100 @@ DELIMITER ;
 
 -- Citation: Claude LLM, accessed on 2025-11-24 with prompt: "I need to develop a stored procedure to update a customer invoice based on this schema [simplified SQL provided]"
 
+-- #############################
+-- CREATE Suppliers
+-- #############################
+DROP PROCEDURE IF EXISTS sp_CreateSupplier;
+
+DELIMITER //
+CREATE PROCEDURE sp_CreateSupplier(
+    IN p_supplierName   VARCHAR(100),
+    IN p_smuggler       TINYINT,
+    IN p_blackmailable  TINYINT,
+    IN p_cultureID      INT
+)
+BEGIN
+    DECLARE error_message VARCHAR(255);
+
+    -- Error handling
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+        -- Validate foreign key references exist
+        IF p_cultureID IS NOT NULL 
+           AND NOT EXISTS (SELECT 1 FROM Cultures WHERE cultureID = p_cultureID) THEN
+            SET error_message = CONCAT('Invalid cultureID: ', p_cultureID, ' does not exist in Cultures table');
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
+        END IF;
+
+        -- Insert the new supplier
+        INSERT INTO Suppliers (supplierName, smuggler, blackmailable, cultureID)
+        VALUES (p_supplierName, p_smuggler, p_blackmailable, p_cultureID);
+
+    COMMIT;
+END //
+DELIMITER ;
+
+-- #############################
+-- CREATE Suppliers
+-- #############################
+DROP PROCEDURE IF EXISTS sp_UpdateSupplier;
+
+DELIMITER //
+CREATE PROCEDURE sp_UpdateSupplier(
+    IN p_supplierID      INT,
+    IN p_supplierName    VARCHAR(100),
+    IN p_smuggler        TINYINT,
+    IN p_blackmailable   TINYINT,
+    IN p_cultureID       INT
+)
+BEGIN
+    DECLARE error_message VARCHAR(255);
+
+    -- Error handling
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+        -- Validate supplier exists
+        IF NOT EXISTS (SELECT 1 FROM Suppliers WHERE supplierID = p_supplierID) THEN
+            SET error_message = CONCAT('No matching record found in Suppliers for supplierID: ', p_supplierID);
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
+        END IF;
+
+        -- Normalize empty or invalid foreign keys to NULL
+        IF p_cultureID IS NULL OR p_cultureID = 0 THEN
+            SET p_cultureID = NULL;
+        END IF;
+
+        -- Validate foreign key references exist (only if not NULL)
+        IF p_cultureID IS NOT NULL 
+           AND NOT EXISTS (SELECT 1 FROM Cultures WHERE cultureID = p_cultureID) THEN
+            SET error_message = CONCAT('Invalid cultureID: ', p_cultureID, ' does not exist in Cultures table');
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
+        END IF;
+
+        -- Update only fields that are provided
+        UPDATE Suppliers
+        SET 
+            supplierName  = COALESCE(p_supplierName, supplierName),
+            smuggler      = COALESCE(p_smuggler, smuggler),
+            blackmailable = COALESCE(p_blackmailable, blackmailable),
+            cultureID     = COALESCE(p_cultureID, cultureID)
+        WHERE supplierID = p_supplierID;
+
+    COMMIT;
+
+END //
+DELIMITER ;
 
 
 -- #############################

@@ -28,13 +28,11 @@
             <td>{{this.favoriteFood}}</td>
 
             {{! DELETE form }}
-            <form id='delete_supplier_form'>
-                <input type='hidden' name='delete_supplier_id' value='{{this.supplierID}}' />
-                <input type='hidden' name='delete_supplier_name' value='{{this.supplierName}}' />
+            <form id="delete_supplier_form" method="POST" action="/delete-supplier">
+                <input type="hidden" name="delete_supplier_id" value="{{this.supplierID}}" />
+                <input type="hidden" name="delete_supplier_name" value="{{this.supplierName}}" />
                 <td>
-                    <button type='submit'>
-                        Delete
-                    </button>
+                    <button type="submit">Delete</button>
                 </td>
             </form>
         </tr>

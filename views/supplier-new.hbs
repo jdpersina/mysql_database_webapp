@@ -1,26 +1,30 @@
 {{! CREATE form }}
 <h1>Add New Supplier</h1>
-<form class='cuForm' id='create_supplier_form'>
-    <label for='create_supplier_name'>Name: </label>
-    <input type='text' name='create_supplier_name' id='create_supplier_name' required />
 
-    <label for='create_supplier_gullibility'>Gullibility Rating: </label>
-    <input type='number' name='create_supplier_gullibility' id='create_supplier_gullibility' min='0' />
+<form class="cuForm" id="create_supplier_form" method="POST" action="/create-new-supplier">
+    <label for="create_supplier_name">Name: </label>
+    <input type="text" name="create_supplier_name" id="create_supplier_name" required />
 
-    <label for='create_supplier_blackmailable'>Blackmailable: </label>
-    <select name='create_supplier_blackmailable' id='create_supplier_blackmailable'>
-        <option value='0'>No</option>
-        <option value='1'>Yes</option>
+    <label for="create_supplier_smuggler">Smuggler: </label>
+    <select name="create_supplier_smuggler" id="create_supplier_smuggler">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
     </select>
 
-    <label for='create_supplier_culture'>Culture: </label>
-    <select name='create_supplier_culture' id='create_supplier_culture'>
-        <option value='NULL' selected>Select a Culture</option>
-        <option value='NULL'>&lt; None &gt;</option>
+    <label for="create_supplier_blackmailable">Blackmailable: </label>
+    <select name="create_supplier_blackmailable" id="create_supplier_blackmailable">
+        <option value="0">No</option>
+        <option value="1">Yes</option>
+    </select>
+
+    <label for="create_supplier_culture">Culture: </label>
+    <select name="create_supplier_culture" id="create_supplier_culture">
+        <option value="NULL" selected>Select a Culture</option>
+        <option value="NULL">&lt; None &gt;</option>
         {{#each cultures}}
-        <option value='{{this.cultureID}}'>{{this.cultureName}}</option>
+        <option value="{{this.cultureID}}">{{this.cultureName}}</option>
         {{/each}}
     </select>
 
-    <input type='submit' />
+    <input type="submit" value="Create Supplier" />
 </form>

@@ -76,6 +76,8 @@ BEGIN
         FOREIGN KEY (foodItemID) REFERENCES FoodItems(foodItemID)
     );
 
+    SET FOREIGN_KEY_CHECKS=0;
+
 -- Do IDs by hand because this is a category table that will rarely be updated. 
 INSERT INTO Cultures (cultureID, cultureName) VALUES 
     (1, 'Ferengi'),
@@ -86,33 +88,54 @@ INSERT INTO Cultures (cultureID, cultureName) VALUES
     (6, 'Klingon'),
     (7, 'Vulcan'),
     (8, 'Andorian')
+    (9, 'Orion')
 ;
+    -- Building Food Items List. Will be creating a sort by function for Menu page
+    INSERT INTO FoodItems (foodItemID, itemName, cultureID) VALUES
+        (1, 'Root beer', 4),
+        (2, 'Yamok sauce', 3),
+        (3, 'Raktajino', 6),
+        (4, 'Gagh', 6),
+        (5, 'Kanar', 3),
+        (6, 'Plomeek soup', 7),
+        (7, 'Hasperat', 2),
+        (8, 'Bloodwine', 6),
+        (9, 'Tube Grubs', 1),
+        (10, 'Jumja Stick', 2)
+        (11, 'Andorian Ale', 8),
+        (12, 'Ratampa Stew', 2),
+        (13, 'Prune Juice', 4),
+        (14, 'Champagne', 4),
+        (15, 'Millipede Juice', 1),
+        (16, 'Tea, Earl Grey, Hot', 4),
+        (17, 'Peanuts & Cracker Jacks', 4),
+        (18, 'Pancakes', 4),
+        (19, 'Mapa Bread', 2),
+        (20, 'Taspar Eggs', 3),
+        (21, 'Tevmel', 7),
+        (22, 'Red Spice', 7),
+        (23, 'Senarian Egg Broth', 5),
+        (24, 'Syto Beans', 5),
+        (25, 'Kytherian Crab', 1),
+        (26, 'Bacon and Eggs', 4)
+    ;
 
-INSERT INTO FoodItems (foodItemID, itemName, cultureID) VALUES
-    (1, 'Root beer', 4),
-    (2, 'Yamok sauce', 3),
-    (3, 'Raktajino', 6),
-    (4, 'Gagh', 6),
-    (5, 'Kanar', 3),
-    (6, 'Plomeek soup', 5),
-    (7, 'Hasperat', 2)
-;
-
-INSERT INTO Customers (customerName, gullibilityRating, blackmailable, cultureID, favoriteFood) VALUES
-    ('Jadzia Dax', 2, 0, 5, 3),
-    ('Miles O''Brien', 4, 0, 4, 1),
-    ('Kira Nerys', 1, 0, 2, 7),
-    ('Benjamin Sisko', 1, 0, 4, 3),
-    ('Damar', 5, 1, 3, 5),
-    ('T''Pol', 1, 0, 7, 6),
-    ('Worf', 3, 0, 6, 4),
-    ('Rom', 5, 1, 1, 1)
-;
+    INSERT INTO Customers (customerName, gullibilityRating, blackmailable, cultureID, favoriteFood) VALUES
+        ('Jadzia Dax', 2, 0, 5, 3),
+        ('Miles O''Brien', 4, 0, 4, 1),
+        ('Kira Nerys', 1, 0, 2, 7),
+        ('Benjamin Sisko', 1, 0, 4, 3),
+        ('Damar', 5, 1, 3, 5),
+        ('T''Pol', 1, 0, 7, 6),
+        ('Worf', 3, 0, 6, 4),
+        ('Rom', 5, 1, 1, 1)
+    ;
 
 INSERT INTO Suppliers (supplierName, smuggler, blackmailable, cultureID) VALUES 
     ('Cassidy Yates', 1, 1, 4),
     ('Cousin Gaila', 1, 1, 1),
-    ('Starfleet', 0, 0, 4)
+    ('Starfleet', 0, 0, 4),
+    ('Orion Syndicate', 1, 0, 9)
 ;
 
 INSERT INTO CustomerInvoices (customerID) VALUES
@@ -146,10 +169,8 @@ INSERT INTO SupplierInvoice_Has_FoodItems (supplierInvoiceID, foodItemID, quanti
     (4, 1, 50)
 ;
 
-COMMIT;
     SET FOREIGN_KEY_CHECKS=1;
 COMMIT;
 END //
-
 
 DELIMITER ;
