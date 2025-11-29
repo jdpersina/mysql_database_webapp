@@ -580,7 +580,7 @@ END //
 DELIMITER ;
 
 -- #############################
--- CREATE Suppliers
+-- UPDATE Suppliers
 -- #############################
 DROP PROCEDURE IF EXISTS sp_UpdateSupplier;
 
@@ -636,6 +636,61 @@ BEGIN
 END //
 DELIMITER ;
 
+-- #############################
+-- DELETE Supplier
+-- #############################
+
+DELIMITER //
+
+CREATE PROCEDURE sp_DeleteSupplier(IN p_supplierID INT)
+BEGIN
+    DECLARE rows_affected INT DEFAULT 0;
+    DECLARE error_message VARCHAR(255); 
+
+    -- error handling
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        -- Roll back the transaction on any error
+        ROLLBACK;
+        -- Propagate the custom error message to the caller
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+        -- Delete join-table rows for this supplier's invoices
+        DELETE sfhi
+        FROM SupplierInvoice_Has_FoodItems AS sfhi
+        JOIN SupplierInvoices AS si 
+              ON sfhi.supplierInvoiceID = si.supplierInvoiceID
+        WHERE si.supplierID = p_supplierID;
+
+        -- Delete supplier invoices
+        DELETE FROM SupplierInvoices
+        WHERE supplierID = p_supplierID;
+
+        -- Delete the supplier itself
+        DELETE FROM Suppliers
+        WHERE supplierID = p_supplierID;
+
+        -- How many suppliers were deleted?
+        SET rows_affected = ROW_COUNT();
+
+        -- ROW_COUNT() returns the number of rows affected by the preceding statement.
+        IF rows_affected = 0 THEN
+            SET error_message = CONCAT('No matching record found in Suppliers for supplierID: ', p_supplierID);
+            -- Trigger custom error, invoke EXIT HANDLER
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = error_message;
+        ELSE
+            COMMIT;
+            SELECT 'Supplier successfully deleted.' AS result;
+        END IF;
+
+END //
+
+DELIMITER ;
+
+-- Citation: ChatGPT Let's create a Stored Procedure out of this SQL code (Supplied Delete Supplier DML). Edited to align with Existing DELETE Customer Procedure 11/29/25
 
 -- #############################
 -- DELETE SupplierInvoice
