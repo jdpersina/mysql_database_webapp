@@ -32,7 +32,7 @@
                     </button>
                 </td>
             </form>
-
+            {{! EDIT}}
             <td>
                 <a href='/invoices/customers/edit/{{this.customerInvoiceID}}'>
                     <button type='button' class='btn-secondary'>Edit</button>
@@ -199,42 +199,3 @@
         }
     });
 </script>
-
-{{! UPDATE form }}
-<h2>Update an Invoice</h2>
-<form class='cuForm' id='update_invoice_form'>
-    <label for='update_invoice_id'>Invoice to Update: </label>
-    <select name='update_invoice_id' id='update_invoice_id' required>
-        <option value='' disabled selected>Select an Invoice</option>
-        {{#each invoices}}
-        <option value='{{this.customerInvoiceID}}'>
-            Invoice #{{this.customerInvoiceID}} - {{this.customerName}}
-        </option>
-        {{/each}}
-    </select>
-
-    <label for='update_invoice_customer'>Customer: </label>
-    <select name='update_invoice_customer' id='update_invoice_customer'>
-        <option value='' disabled selected>Select a Customer</option>
-        {{#each customers}}
-        <option value='{{this.customerID}}'>{{this.customerName}}</option>
-        {{/each}}
-    </select>
-
-    <label for='update_invoice_fooditem'>Food/Drink Item: </label>
-    <select name='update_invoice_fooditem' id='update_invoice_fooditem'>
-        <option value='' disabled selected>Select an Item</option>
-        {{#each foodItems}}
-        <option value='{{this.foodItemID}}'>{{this.itemName}}</option>
-        {{/each}}
-    </select>
-
-    <label for='update_invoice_quantity'>Quantity: </label>
-    <input type='number' name='update_invoice_quantity' id='update_invoice_quantity' min='1' />
-
-    <input type='submit' value='Update Invoice' />
-</form>
-
-
-
-

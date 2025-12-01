@@ -76,7 +76,6 @@ BEGIN
         FOREIGN KEY (foodItemID) REFERENCES FoodItems(foodItemID)
     );
 
-    SET FOREIGN_KEY_CHECKS=0;
 
 -- Do IDs by hand because this is a category table that will rarely be updated. 
 INSERT INTO Cultures (cultureID, cultureName) VALUES 
@@ -87,7 +86,7 @@ INSERT INTO Cultures (cultureID, cultureName) VALUES
     (5, 'Trill'),
     (6, 'Klingon'),
     (7, 'Vulcan'),
-    (8, 'Andorian')
+    (8, 'Andorian'),
     (9, 'Orion')
 ;
     -- Building Food Items List. Will be creating a sort by function for Menu page
@@ -101,7 +100,7 @@ INSERT INTO Cultures (cultureID, cultureName) VALUES
         (7, 'Hasperat', 2),
         (8, 'Bloodwine', 6),
         (9, 'Tube Grubs', 1),
-        (10, 'Jumja Stick', 2)
+        (10, 'Jumja Stick', 2),
         (11, 'Andorian Ale', 8),
         (12, 'Ratampa Stew', 2),
         (13, 'Prune Juice', 4),
@@ -170,6 +169,7 @@ INSERT INTO SupplierInvoice_Has_FoodItems (supplierInvoiceID, foodItemID, quanti
 ;
 
     SET FOREIGN_KEY_CHECKS=1;
+    SET AUTOCOMMIT = 1;
 COMMIT;
 END //
 

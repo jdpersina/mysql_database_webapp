@@ -547,6 +547,31 @@ app.post('/create-new-supplier', async (req, res) => {
     }
 });
 
+app.post('/delete-supplier', async function (req, res) {
+    try {
+        // Parse frontend form information
+        let data = req.body;
+
+        // Create and execute our query
+        const query1 = `CALL sp_DeleteSupplier(?);`;
+        await db.query(query1, [data.delete_supplier_id]);
+
+        console.log(
+            `DELETE supplier. ID: ${data.delete_supplier_id} ` +
+            `Name: ${data.delete_supplier_name}`
+        );
+
+        // Redirect the user to the updated webpage data
+        res.redirect('/suppliers');
+    } catch (error) {
+        console.error('Error executing queries:', error);
+        // Send a generic error message to the browser
+        res.status(500).send(
+            'An error occurred while executing the database queries.'
+        );
+    }
+});
+
 // CITATION: The structure and approach for these supplier routes were inspired by the customer routes above, following best practices for Express routing and error handling.
 
 /* OTHER ROUTES */
@@ -564,7 +589,7 @@ app.get('/menu', async (req, res) => {
         SELECT f.foodItemID, f.itemName, c.cultureName
             FROM FoodItems f
             LEFT JOIN Cultures c ON f.cultureID = c.cultureID
-            ORDER BY f.itemName;`
+            ORDER BY c.cultureName, f.itemName;`
     const [foodItems] = await db.query(foodItemQuery)
 
     res.render('fooditems', {foodItems: foodItems});
