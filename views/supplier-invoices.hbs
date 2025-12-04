@@ -23,7 +23,7 @@
             <td>{{this.items}}</td>
 
             {{! DELETE form }}
-            <form id='delete_invoice_form'>
+            <form id='delete_invoice_form' method='POST' action='/invoices/suppliers/delete'>
                 <input type='hidden' name='delete_invoice_id' value='{{this.supplierInvoiceID}}' />
                 <td>
                     <button type='submit' class='btn-delete'>
@@ -31,6 +31,7 @@
                     </button>
                 </td>
             </form>
+            {{! EDIT}}
             <td>
                 <a href='/invoices/suppliers/edit/{{this.supplierInvoiceID}}'>
                     <button type='button' class='btn-secondary'>Edit</button>
@@ -42,8 +43,7 @@
 </table>
 
 {{! CREATE form }}
-<h2>Create New Invoice</h2>
-<form class='cuForm' id='create_invoice_form'>
+<form class='cuForm' id='create_invoice_form' method='POST' action='/invoices/suppliers/add'>
     <label for='create_invoice_supplier'>Supplier: </label>
     <select name='create_invoice_supplier' id='create_invoice_supplier' required>
         <option value='' disabled selected>Select a Supplier</option>
@@ -65,3 +65,4 @@
 
     <input type='submit' value='Create Invoice' />
 </form>
+
