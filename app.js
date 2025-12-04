@@ -455,17 +455,22 @@ app.get('/suppliers', async function (req, res) {
 
 app.get('/invoices/suppliers', async function (req, res) {
     try {
-        const sInvoiceQuery = `SELECT 
-                                    si.supplierInvoiceID,
-                                    s.supplierName,
-                                    COUNT(sihf.foodItemID) AS itemCount,
-                                    GROUP_CONCAT(fi.itemName SEPARATOR ', ') AS items
-                                FROM SupplierInvoices si
-                                INNER JOIN Suppliers s ON si.supplierID = s.supplierID
-                                LEFT JOIN SupplierInvoice_Has_FoodItems sihf ON si.supplierInvoiceID = sihf.supplierInvoiceID
-                                LEFT JOIN FoodItems fi ON sihf.foodItemID = fi.foodItemID
-                                GROUP BY si.supplierInvoiceID, s.supplierName
-                                ORDER BY si.supplierInvoiceID DESC;`
+const sInvoiceQuery = `
+                        SELECT 
+                            si.supplierInvoiceID,
+                            s.supplierName,
+                            COUNT(sihf.foodItemID) AS itemCount,
+                            GROUP_CONCAT(
+                                CONCAT(fi.itemName, ' (', sihf.quantity, ')')
+                                ORDER BY fi.itemName
+                                SEPARATOR ', '
+                            ) AS items
+                        FROM SupplierInvoices si
+                        INNER JOIN Suppliers s ON si.supplierID = s.supplierID
+                        LEFT JOIN SupplierInvoice_Has_FoodItems sihf ON si.supplierInvoiceID = sihf.supplierInvoiceID
+                        LEFT JOIN FoodItems fi ON sihf.foodItemID = fi.foodItemID
+                        GROUP BY si.supplierInvoiceID, s.supplierName
+                        ORDER BY si.supplierInvoiceID DESC;`;
         const [sInvoices] = await db.query(sInvoiceQuery);
 
         const foodItemQuery = `SELECT * from FoodItems;`
@@ -573,6 +578,181 @@ app.post('/delete-supplier', async function (req, res) {
 });
 
 // CITATION: The structure and approach for these supplier routes were inspired by the customer routes above, following best practices for Express routing and error handling.
+
+// Create New Supplier Invoice
+console.log('Registering POST /invoices/suppliers/add');
+// Create New Supplier Invoice
+app.post('/invoices/suppliers/add', async (req, res) => {
+    const { create_invoice_supplier, create_invoice_fooditem, create_invoice_quantity } = req.body;
+
+    try {
+        // Start transaction
+        await db.query('START TRANSACTION');
+        
+        // Create the supplier invoice (header)
+        const [invoiceResult] = await db.query(
+            'CALL sp_CreateSupplierInvoice(?, @invoiceID)',
+            [create_invoice_supplier]
+        );
+
+        // Match the SELECT p_invoiceID AS newInvoiceID in the proc
+        const invoiceID = invoiceResult[0][0].newInvoiceID;
+        
+        // Normalize to arrays (handles single item vs multiple)
+        const foodItems = Array.isArray(create_invoice_fooditem)
+            ? create_invoice_fooditem
+            : [create_invoice_fooditem];
+
+        const quantities = Array.isArray(create_invoice_quantity)
+            ? create_invoice_quantity
+            : [create_invoice_quantity];
+
+        // Add each item to the supplier invoice
+        for (let i = 0; i < foodItems.length; i++) {
+            await db.query(
+                'CALL sp_AddSupplierInvoiceItem(?, ?, ?)',
+                [invoiceID, foodItems[i], quantities[i]]
+            );
+        }
+
+        // Commit the whole thing
+        await db.query('COMMIT');
+        res.redirect('/invoices/suppliers');
+
+    } catch (error) {
+        await db.query('ROLLBACK');
+        console.error('Error creating supplier invoice:', error);
+        res.status(500).send('Error creating supplier invoice');
+    }
+});
+
+// Get single supplier invoice for editing
+app.get('/invoices/suppliers/edit/:id', async (req, res) => {
+    const invoiceID = req.params.id;
+
+    try {
+        // Get invoice header with supplier info
+        const [invoice] = await db.query(`
+            SELECT 
+                si.supplierInvoiceID,
+                si.supplierID,
+                s.supplierName
+            FROM SupplierInvoices si
+            JOIN Suppliers s ON si.supplierID = s.supplierID
+            WHERE si.supplierInvoiceID = ?
+        `, [invoiceID]);
+
+        if (invoice.length === 0) {
+            return res.status(404).send('Supplier invoice not found');
+        }
+
+        // Get items on this supplier invoice
+        const [items] = await db.query(`
+            SELECT 
+                fi.foodItemID,
+                fi.itemName,
+                sihf.quantity
+            FROM SupplierInvoice_Has_FoodItems sihf
+            JOIN FoodItems fi ON sihf.foodItemID = fi.foodItemID
+            WHERE sihf.supplierInvoiceID = ?
+            ORDER BY fi.itemName
+        `, [invoiceID]);
+
+        // Get all suppliers for dropdown
+        const [suppliers] = await db.query(
+            'SELECT supplierID, supplierName FROM Suppliers ORDER BY supplierName'
+        );
+
+        // Get all food items for dropdown
+        const [foodItems] = await db.query(
+            'SELECT foodItemID, itemName FROM FoodItems ORDER BY itemName'
+        );
+
+        res.render('supplier-invoice-edit', {
+            invoice: invoice[0],
+            items,
+            suppliers,
+            foodItems
+        });
+
+    } catch (error) {
+        console.error('Error fetching supplier invoice:', error);
+        res.status(500).send('Error fetching supplier invoice');
+    }
+});
+
+// Add item to existing supplier invoice
+app.post('/invoices/suppliers/:id/add-item', async (req, res) => {
+    const invoiceID = req.params.id;
+    const { foodItemID, quantity } = req.body;
+
+    try {
+        await db.query('CALL sp_AddSupplierInvoiceItem(?, ?, ?)', [
+            invoiceID,
+            foodItemID,
+            quantity
+        ]);
+        res.redirect(`/invoices/suppliers/edit/${invoiceID}`);
+    } catch (error) {
+        console.error('Error adding item to supplier invoice:', error);
+        res.status(500).send('Error adding item');
+    }
+});
+
+// Update item quantity on supplier invoice
+app.post('/invoices/suppliers/:invoiceID/update-item/:foodItemID', async (req, res) => {
+    const { invoiceID, foodItemID } = req.params;
+    const { quantity } = req.body;
+
+    try {
+        await db.query('CALL sp_UpdateSupplierInvoiceQuantity(?, ?, ?)', [
+            invoiceID,
+            foodItemID,
+            quantity
+        ]);
+
+        res.redirect(`/invoices/suppliers/edit/${invoiceID}`);
+    } catch (error) {
+        console.error('Error updating supplier invoice item quantity:', error);
+        res.status(500).send('Error updating item');
+    }
+});
+
+// Delete entire supplier invoice
+app.post('/invoices/suppliers/delete', async (req, res) => {
+    try {
+        const data = req.body;
+
+        const query = 'CALL sp_DeleteSupplierInvoice(?);';
+        await db.query(query, [data.delete_invoice_id]);
+
+        console.log(`DELETE supplier invoice. ID: ${data.delete_invoice_id}`);
+
+        res.redirect('/invoices/suppliers');
+    } catch (error) {
+        console.error('Error deleting supplier invoice:', error);
+        res.status(500).send('An error occurred while deleting supplier invoice.');
+    }
+});
+
+// Remove item from supplier invoice
+app.post('/invoices/suppliers/:invoiceID/remove-item/:foodItemID', async (req, res) => {
+    const { invoiceID, foodItemID } = req.params;
+
+    try {
+        await db.query('CALL sp_RemoveSupplierInvoiceItem(?, ?)', [
+            invoiceID,
+            foodItemID
+        ]);
+
+        res.redirect(`/invoices/suppliers/edit/${invoiceID}`);
+    } catch (error) {
+        console.error('Error removing item from supplier invoice:', error);
+        res.status(500).send('Error removing item');
+    }
+});
+
+// CITATION: The structure and approach for these supplier invoice routes were inspired by the customer invoice routes above, following best practices for Express routing and error handling.
 
 /* OTHER ROUTES */
 
