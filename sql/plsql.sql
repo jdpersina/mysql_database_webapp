@@ -155,7 +155,9 @@ BEGIN
         (1, 2, 5),
         (1, 3, 10), 
         (2, 3, 1),
-        (3, 1, 10)
+        (3, 1, 10),
+        (4, 7, 1),
+        (4, 3, 1)
     ;
 
     INSERT INTO SupplierInvoice_Has_FoodItems (supplierInvoiceID, foodItemID, quantity) VALUES 
@@ -691,6 +693,176 @@ END //
 DELIMITER ;
 
 -- Citation: ChatGPT Let's create a Stored Procedure out of this SQL code (Supplied Delete Supplier DML). Edited to align with Existing DELETE Customer Procedure 11/29/25
+
+
+-- #############################
+-- ADD SupplierInvoice Item
+-- #############################
+
+DROP PROCEDURE IF EXISTS sp_AddSupplierInvoiceItem;
+DELIMITER //
+CREATE PROCEDURE sp_AddSupplierInvoiceItem(
+    IN p_invoiceID INT,
+    IN p_foodItemID INT,
+    IN p_quantity INT
+)
+BEGIN
+    DECLARE v_invoiceExists INT;
+    DECLARE v_foodItemExists INT;
+    
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Validate supplier invoice exists
+    SELECT COUNT(*) INTO v_invoiceExists 
+    FROM SupplierInvoices 
+    WHERE supplierInvoiceID = p_invoiceID;
+    
+    IF v_invoiceExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Supplier invoice ID does not exist';
+    END IF;
+    
+    -- Validate food item exists
+    SELECT COUNT(*) INTO v_foodItemExists 
+    FROM FoodItems 
+    WHERE foodItemID = p_foodItemID;
+    
+    IF v_foodItemExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Food item ID does not exist';
+    END IF;
+    
+    -- Validate quantity
+    IF p_quantity <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Quantity must be greater than zero';
+    END IF;
+    
+    -- Insert the line item
+    INSERT INTO SupplierInvoice_Has_FoodItems (supplierInvoiceID, foodItemID, quantity)
+    VALUES (p_invoiceID, p_foodItemID, p_quantity);
+    
+    COMMIT;
+END //
+DELIMITER ;
+
+
+-- #############################
+-- CREATE SupplierInvoice
+-- #############################
+
+DROP PROCEDURE IF EXISTS sp_CreateSupplierInvoice;
+
+DELIMITER //
+CREATE PROCEDURE sp_CreateSupplierInvoice(
+    IN p_supplierID INT,
+    OUT p_invoiceID INT
+)
+BEGIN
+    DECLARE v_supplierExists INT;
+
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+
+    -- Check if the supplier exists
+    SELECT COUNT(*) INTO v_supplierExists
+    FROM Suppliers
+    WHERE supplierID = p_supplierID;
+
+    IF v_supplierExists = 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Supplier does not exist';
+    END IF;
+
+    -- Create the invoice
+    INSERT INTO SupplierInvoices (supplierID)
+    VALUES (p_supplierID);
+
+    -- Get the new invoice ID
+    SET p_invoiceID = LAST_INSERT_ID();
+
+    COMMIT;
+
+    SELECT p_invoiceID AS newInvoiceID;
+
+END //
+DELIMITER ;
+
+-- #############################
+-- UPDATE SupplierInvoice
+-- #############################
+
+DROP PROCEDURE IF EXISTS sp_UpdateSupplierInvoiceQuantity;
+DELIMITER //
+CREATE PROCEDURE sp_UpdateSupplierInvoiceQuantity(
+    IN p_invoiceID INT,
+    IN p_foodItemID INT,
+    IN p_quantity INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    -- Validate quantity
+    IF p_quantity <= 0 THEN
+        SIGNAL SQLSTATE '45000'
+        SET MESSAGE_TEXT = 'Quantity must be greater than zero';
+    END IF;
+    
+    -- Update the quantity for this item on this supplier invoice
+    UPDATE SupplierInvoice_Has_FoodItems
+    SET quantity = p_quantity
+    WHERE supplierInvoiceID = p_invoiceID
+      AND foodItemID = p_foodItemID;
+    
+    COMMIT;
+END //
+DELIMITER ;
+
+-- #############################
+-- DELETE SupplierInvoice Item
+-- #############################
+
+DROP PROCEDURE IF EXISTS sp_RemoveSupplierInvoiceItem;
+DELIMITER //
+CREATE PROCEDURE sp_RemoveSupplierInvoiceItem(
+    IN p_invoiceID INT,
+    IN p_foodItemID INT
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+    
+    START TRANSACTION;
+    
+    DELETE FROM SupplierInvoice_Has_FoodItems
+    WHERE supplierInvoiceID = p_invoiceID 
+      AND foodItemID = p_foodItemID;
+    
+    COMMIT;
+END //
+DELIMITER ;
+
+-- CITATION: The above Supplier Invoices Procedures were adapted from the Customer Invoices procedures created earlier, with appropriate modifications for Supplier context. 12/3/2025.
 
 -- #############################
 -- DELETE SupplierInvoice
