@@ -1,11 +1,11 @@
 <h1>Menu</h1>
 
 <div>There are {{foodItems.length}} food items.</div>
+<div>Food Items Are listed per Culture in Alphabetical Order</div>
 
 <table border="1" cellspacing="0" cellpadding="5">
     <thead>
         <tr>
-            <th>Food Item ID</th>
             <th>Item Name</th>
             <th>Culture</th>
         </tr>
@@ -13,7 +13,6 @@
     <tbody>
         {{#each foodItems}}
         <tr>
-            <td>{{this.foodItemID}}</td>
             <td>{{this.itemName}}</td>
             <td>{{this.cultureName}}</td>
         </tr>

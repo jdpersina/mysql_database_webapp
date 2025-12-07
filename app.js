@@ -579,8 +579,7 @@ app.post('/delete-supplier', async function (req, res) {
 
 // CITATION: The structure and approach for these supplier routes were inspired by the customer routes above, following best practices for Express routing and error handling.
 
-// Create New Supplier Invoice
-console.log('Registering POST /invoices/suppliers/add');
+
 // Create New Supplier Invoice
 app.post('/invoices/suppliers/add', async (req, res) => {
     const { create_invoice_supplier, create_invoice_fooditem, create_invoice_quantity } = req.body;
@@ -780,6 +779,6 @@ app.get('/menu', async (req, res) => {
 */
 
 app.listen(PORT, function(){
-    console.log("===== SERVER STARTING - SUPPLIER SINGULAR =====");
+    console.log("===== SERVER STARTING - QUARKs BAR =====");
     console.log('Express started on http://localhost:' + PORT + '; press Ctrl-C to terminate...')
 });
