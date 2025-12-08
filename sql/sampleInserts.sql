@@ -1,3 +1,5 @@
+-- Citation: Our own work. 
+
 START TRANSACTION;
 
 -- Do IDs by hand because this is a category table that will rarely be updated. 
