@@ -13,3 +13,5 @@ const pool = mysql.createPool({
 
 // Export it for use in our application
 module.exports = pool;
+
+// Citation: Starter code provided on Canvas for CS340 Fall 2025.
