@@ -1,3 +1,4 @@
+-- Citation: Our own work.
 DROP PROCEDURE IF EXISTS sp_load_quarkdb;
 DELIMITER //
 CREATE PROCEDURE sp_load_quarkdb()
