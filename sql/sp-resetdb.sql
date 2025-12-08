@@ -1,3 +1,4 @@
+-- Citation: Our own work. 
 DROP PROCEDURE  IF EXISTS sp_resetdb;
 DELIMITER //
 CREATE PROCEDURE sp_resetdb()
