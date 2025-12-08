@@ -176,6 +176,8 @@ END //
 
 DELIMITER ;
 
+-- Citation: Table creation & insert our own hand-authored SQL.
+
 -- #############################
 -- CREATE Customers
 -- #############################
