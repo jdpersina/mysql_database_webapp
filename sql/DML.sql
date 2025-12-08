@@ -1,3 +1,4 @@
+-- Citation: Our own work.
 -- Select Information on a supplier (dynamic search/dropdown input)
 SELECT supplierName, smuggler, blackmailable, cultureName
 FROM Suppliers
