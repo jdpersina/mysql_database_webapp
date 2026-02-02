@@ -102,22 +102,6 @@ INSERT INTO Cultures (cultureID, cultureName) VALUES
         (8, 'Bloodwine', 6),
         (9, 'Tube Grubs', 1),
         (10, 'Jumja Stick', 2),
-        (11, 'Andorian Ale', 8),
-        (12, 'Ratampa Stew', 2),
-        (13, 'Prune Juice', 4),
-        (14, 'Champagne', 4),
-        (15, 'Millipede Juice', 1),
-        (16, 'Tea, Earl Grey, Hot', 4),
-        (17, 'Peanuts & Cracker Jacks', 4),
-        (18, 'Pancakes', 4),
-        (19, 'Mapa Bread', 2),
-        (20, 'Taspar Eggs', 3),
-        (21, 'Tevmel', 7),
-        (22, 'Red Spice', 7),
-        (23, 'Senarian Egg Broth', 5),
-        (24, 'Syto Beans', 5),
-        (25, 'Kytherian Crab', 1),
-        (26, 'Bacon and Eggs', 4)
     ;
 
     INSERT INTO Customers (customerName, gullibilityRating, blackmailable, cultureID, favoriteFood) VALUES
